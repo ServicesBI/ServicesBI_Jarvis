@@ -1,5 +1,7 @@
 # ServicesBI Jarvis
 
+![ServicesBI Jarvis HUD](docs/assets/jarvis-hud-preview.png)
+
 Assistente operacional local com HUD futurista, comandos por voz, 12 agentes de IA, integração Claude/Codex, Obsidian, automações e execução de protocolos.
 
 > Projeto privado em desenvolvimento pela ServicesBI.
