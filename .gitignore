@@ -1,0 +1,40 @@
+node_modules/
+.env
+.env.*
+*.log
+system/JARVIS-MEMORY.md
+system/JARVIS-HISTORY.json
+system/FELIPE-MEMORY.md
+system/FELIPE-HISTORY.json
+system/memory-embeddings.json
+system/last-audio*
+system/workflows/
+Documents and Projects/
+pet/node_modules/
+sensors/
+launcher/node_modules/
+launcher/dist/
+launcher/build/
+.cache/
+*.exe
+*.xlsx
+*.pdb
+jarvis-autostart.vbs
+jarvis-service.bat
+.claude/settings.local.json
+__pycache__/
+*.pyc
+gen-pdf-guide.cjs
+# Configuração local Claude / agentes locais
+.claude/
+.synapse/
+
+# Memória e histórico local do Jarvis
+system/JARVIS-HISTORY.json
+system/JARVIS-MEMORY.md
+system/memory-embeddings.json
+system/last-audio*
+system/workflows/
+
+# Dados sensíveis / runtime local
+*.local.json
