@@ -1,0 +1,33 @@
+# requirements.txt — JARVIS Python dependencies
+# Install: pip install -r requirements.txt
+# Python 3.10+ required
+
+# ── Captura de tela ──────────────────────────────────────────────────────────
+# screenshot.py, screenshot-cursor.py
+mss
+Pillow
+
+# ── Automação de mouse e teclado ─────────────────────────────────────────────
+# computer-action.py, ui-automation.py (lazy), workflow-recorder.py (lazy)
+pyautogui
+
+# ── Clipboard ────────────────────────────────────────────────────────────────
+# ui-automation.py (lazy-loaded, fallback para paste via clipboard)
+pyperclip
+
+# ── Informações de processos do sistema ──────────────────────────────────────
+# screen-state.py (lazy-loaded para detecção de processos ativos)
+psutil
+
+# ── Criação e edição de planilhas Excel ──────────────────────────────────────
+# scripts gerados dinamicamente por server.js para templates Excel
+openpyxl
+
+# ── UI Automation Windows ────────────────────────────────────────────────────
+# ui-automation.py (lazy-loaded, somente Windows)
+uiautomation
+
+# ── WebSocket / Chrome DevTools Protocol ─────────────────────────────────────
+# browser-control.py — OPCIONAL: importado com try/except, fallback gracioso
+# Instalar apenas se for usar controle de Chrome via CDP:
+# websockets
