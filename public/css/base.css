@@ -1,0 +1,115 @@
+/* base.css - variaveis, reset, fontes e base global. */
+
+/* ═══════════════════════════════════════════════════════════
+   J.A.R.V.I.S. — Clean Cockpit v6.0
+   Particle Orb + Terminal + Voice — Minimal Design
+═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:         #010408;
+  --bg2:        #040a10;
+  --cyan:       #00e4ff;
+  --cyan2:      #00b8d4;
+  --green:      #00ff88;
+  --purple:     #a78bfa;
+  --fire:       #ff6a00;
+  --amber:      #ffb84e;
+  --red:        #ff4466;
+  --white:      #e8f4ff;
+  --text:       #f0f8ff;
+  --text-mid:   #b8d4e8;
+  --text-dim:   #7aa0bc;
+  --dim:        #1a2a38;
+  --glass:          rgba(0,228,255,0.03);
+  --glass-border:   rgba(0,228,255,0.10);
+  --glass-strong:   rgba(0,228,255,0.06);
+  --glow-c:  0 0 20px rgba(0,228,255,0.25);
+  --glow-c2: 0 0 12px rgba(0,228,255,0.12);
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-orb:  'Orbitron', sans-serif;
+  --font-ui:   'Inter', -apple-system, sans-serif;
+  --nav-h: 46px;
+  --t: all 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  height: 100%; overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(0,228,255,0.15); border-radius: 2px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ═══ AMBIENT BACKGROUND ═══ */
+.bg-hex {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9z' fill='%2300e4ff' fill-opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.5;
+}
+.bg-scanlines {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,228,255,0.012) 2px, rgba(0,228,255,0.012) 4px);
+}
+.bg-glow-tl {
+  position: fixed; top: 0; left: 0; width: 50%; height: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 20% 20%, rgba(0,100,180,0.06), transparent 70%);
+}
+.bg-glow-br {
+  position: fixed; bottom: 0; right: 0; width: 50%; height: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 80% 80%, rgba(167,139,250,0.04), transparent 70%);
+}
+
+/* ═══ NAVBAR — Minimal ═══ */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav-h); z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: linear-gradient(180deg, rgba(1,4,8,0.95) 0%, rgba(1,4,8,0.8) 100%);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+}
+.navbar-left { display: flex; align-items: center; gap: 12px; }
+.navbar-title {
+  font-family: var(--font-orb); font-size: 14px; font-weight: 700;
+  color: #ffd700; letter-spacing: 4px;
+  text-shadow: 0 0 15px rgba(255,215,0,0.25);
+}
+.navbar-tabs { display: flex; gap: 4px; }
+.tab-btn {
+  background: none; border: 1px solid transparent; border-radius: 6px;
+  color: var(--text-dim); cursor: pointer;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 1px; padding: 6px 14px;
+  transition: var(--t);
+}
+.tab-btn:hover { color: var(--text-mid); border-color: rgba(0,228,255,0.12); }
+.tab-btn.active {
+  color: var(--cyan); border-color: rgba(0,228,255,0.25);
+  background: rgba(0,228,255,0.05);
+  text-shadow: 0 0 8px rgba(0,228,255,0.3);
+}
+.navbar-right { display: flex; align-items: center; gap: 14px; }
+.lang-toggle { display: flex; gap: 2px; }
+.lang-btn {
+  background: none; border: 1px solid transparent; border-radius: 4px;
+  color: var(--text-dim); cursor: pointer;
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 1px; padding: 4px 8px; transition: var(--t);
+}
+.lang-btn:hover { color: var(--text-mid); }
+.lang-btn.active {
+  color: var(--cyan); border-color: rgba(0,228,255,0.3);
+  background: rgba(0,228,255,0.08);
+}
+.clock {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-dim); letter-spacing: 1px;
+}
+

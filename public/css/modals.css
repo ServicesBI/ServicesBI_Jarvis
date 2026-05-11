@@ -1,0 +1,502 @@
+/* modals.css - ingest modal, brain modal e overrides finais de modais. */
+
+  #ingest-modal.modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 4, 10, 0.78) !important;
+    z-index: 999999 !important;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 24px;
+    backdrop-filter: blur(8px);
+  }
+
+  #ingest-modal .modal-card {
+    position: relative !important;
+    z-index: 1000000 !important;
+    display: flex !important;
+    flex-direction: column;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: min(740px, calc(100vw - 40px));
+    max-height: 85vh;
+    overflow: hidden;
+    border: 1px solid rgba(0, 228, 255, 0.55);
+    border-radius: 8px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(0, 228, 255, 0.16), transparent 42%),
+      linear-gradient(180deg, rgba(2, 18, 32, 0.96), rgba(0, 8, 18, 0.98));
+    box-shadow:
+      0 0 36px rgba(0, 228, 255, 0.28),
+      inset 0 0 24px rgba(0, 228, 255, 0.08);
+    color: var(--ink);
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+  }
+
+  #ingest-modal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(0, 228, 255, 0.22);
+    background: rgba(0, 228, 255, 0.05);
+  }
+
+  #ingest-modal .modal-title {
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(0, 228, 255, 0.45);
+  }
+
+  #ingest-modal .modal-close {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(0, 228, 255, 0.34);
+    border-radius: 6px;
+    background: rgba(0, 10, 22, 0.85);
+    color: var(--cyan);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    appearance: none;
+    box-shadow: inset 0 0 12px rgba(0, 228, 255, 0.06);
+  }
+
+  #ingest-modal .modal-close:hover {
+    border-color: rgba(255, 93, 108, 0.7);
+    color: var(--danger);
+    background: rgba(255, 93, 108, 0.12);
+  }
+
+  #ingest-modal .modal-body {
+    padding: 18px;
+    overflow: auto;
+    min-height: 0;
+  }
+
+  #ingest-modal .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 18px 16px;
+    border-top: 1px solid rgba(0, 228, 255, 0.18);
+    background: rgba(0, 6, 14, 0.72);
+  }
+
+  #ingest-modal .ingest-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  #ingest-modal .ingest-tab {
+    flex: 1 1 0;
+    min-height: 36px;
+    border: 1px solid rgba(0, 228, 255, 0.25);
+    border-radius: 6px;
+    background: rgba(0, 228, 255, 0.06);
+    color: var(--cyan-dim);
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    appearance: none;
+  }
+
+  #ingest-modal .ingest-tab:hover,
+  #ingest-modal .ingest-tab.active {
+    color: #fff;
+    border-color: rgba(0, 228, 255, 0.75);
+    background: rgba(0, 228, 255, 0.16);
+    box-shadow: 0 0 14px rgba(0, 228, 255, 0.18);
+  }
+
+  #ingest-modal .ingest-panel {
+    display: none;
+  }
+
+  #ingest-modal .ingest-panel.active {
+    display: block;
+  }
+
+  #ingest-modal .ingest-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--cyan-dim);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+
+  #ingest-modal .ingest-textarea,
+  #ingest-modal .ingest-select {
+    width: 100%;
+    border: 1px solid rgba(0, 228, 255, 0.28);
+    border-radius: 7px;
+    background: rgba(0, 9, 20, 0.88);
+    color: var(--ink);
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    outline: none;
+    appearance: none;
+    box-shadow: inset 0 0 16px rgba(0, 228, 255, 0.05);
+  }
+
+  #ingest-modal .ingest-textarea {
+    min-height: 160px;
+    resize: vertical;
+    padding: 12px;
+    line-height: 1.45;
+  }
+
+  #ingest-modal .ingest-select {
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  #ingest-modal .ingest-textarea:focus,
+  #ingest-modal .ingest-select:focus {
+    border-color: rgba(0, 228, 255, 0.75);
+    box-shadow: 0 0 14px rgba(0, 228, 255, 0.16), inset 0 0 16px rgba(0, 228, 255, 0.06);
+  }
+
+  #ingest-modal .ingest-textarea::placeholder {
+    color: rgba(214, 247, 255, 0.42);
+  }
+
+  #ingest-modal .ingest-dropzone {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    border: 1px dashed rgba(0, 228, 255, 0.45);
+    border-radius: 8px;
+    background: rgba(0, 228, 255, 0.05);
+    color: var(--cyan-dim);
+    text-align: center;
+    cursor: pointer;
+  }
+
+  #ingest-modal .ingest-dropzone:hover,
+  #ingest-modal .ingest-dropzone.dragover {
+    border-color: rgba(0, 228, 255, 0.85);
+    background: rgba(0, 228, 255, 0.1);
+    box-shadow: inset 0 0 18px rgba(0, 228, 255, 0.08);
+  }
+
+  #ingest-modal .ingest-dropzone svg {
+    margin-bottom: 10px;
+    color: var(--cyan);
+    opacity: .72;
+  }
+
+  #ingest-modal .ingest-dropzone p {
+    margin: 4px 0;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  #ingest-modal .ingest-dropzone strong {
+    color: var(--cyan);
+  }
+
+  #ingest-modal .ingest-filetypes,
+  #ingest-modal .ingest-session-desc,
+  #ingest-modal .ingest-session-note,
+  #ingest-modal .ingest-file-name,
+  #ingest-modal .ingest-status {
+    color: rgba(214, 247, 255, 0.62);
+    font-size: 11px;
+  }
+
+  #ingest-modal .ingest-session-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  #ingest-modal .ingest-check {
+    padding: 10px 12px;
+    border: 1px solid rgba(0, 228, 255, 0.16);
+    border-radius: 6px;
+    background: rgba(0, 228, 255, 0.05);
+    color: var(--ink);
+    font-size: 12px;
+  }
+
+  #ingest-modal .ingest-check span {
+    color: #00ff88;
+    margin-right: 8px;
+  }
+
+  #ingest-modal .ingest-status {
+    min-height: 20px;
+    margin-top: 12px;
+  }
+
+  #ingest-modal .modal-btn {
+    min-height: 36px;
+    padding: 0 16px;
+    border: 1px solid rgba(0, 228, 255, 0.28);
+    border-radius: 6px;
+    background: rgba(0, 228, 255, 0.07);
+    color: var(--cyan);
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    appearance: none;
+  }
+
+  #ingest-modal .modal-btn-secondary {
+    color: var(--cyan-dim);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  #ingest-modal .modal-btn-primary {
+    color: #001019;
+    border-color: rgba(0, 228, 255, 0.8);
+    background: linear-gradient(180deg, rgba(135, 244, 255, 0.95), rgba(0, 228, 255, 0.78));
+    box-shadow: 0 0 16px rgba(0, 228, 255, 0.28);
+  }
+
+  #ingest-modal .modal-btn:hover {
+    border-color: rgba(0, 228, 255, 0.75);
+    box-shadow: 0 0 14px rgba(0, 228, 255, 0.2);
+  }
+
+  #brain-modal.modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(0, 4, 10, 0.78) !important;
+    z-index: 999999 !important;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    padding: 24px;
+    backdrop-filter: blur(8px);
+  }
+
+  #brain-modal .modal-card {
+    position: relative !important;
+    z-index: 1000000 !important;
+    display: flex !important;
+    flex-direction: column;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: min(980px, calc(100vw - 40px));
+    max-height: 85vh;
+    overflow: hidden;
+    border: 1px solid rgba(0, 228, 255, 0.55);
+    border-radius: 8px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(0, 228, 255, 0.16), transparent 42%),
+      linear-gradient(180deg, rgba(2, 18, 32, 0.96), rgba(0, 8, 18, 0.98));
+    box-shadow:
+      0 0 36px rgba(0, 228, 255, 0.28),
+      inset 0 0 24px rgba(0, 228, 255, 0.08);
+    color: var(--ink);
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+  }
+
+  #brain-modal .modal-card.is-maximized,
+  #brain-modal .modal-card.maximized {
+    width: 96vw !important;
+    height: 92vh !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  #brain-modal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(0, 228, 255, 0.22);
+    background: rgba(0, 228, 255, 0.05);
+  }
+
+  #brain-modal .modal-title {
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(0, 228, 255, 0.45);
+  }
+
+  #brain-modal .modal-header-btns {
+    display: flex;
+    gap: 8px;
+  }
+
+  #brain-modal .modal-close,
+  #brain-modal .modal-size-btn {
+    width: 34px;
+    height: 34px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(0, 228, 255, 0.34);
+    border-radius: 6px;
+    background: rgba(0, 10, 22, 0.85);
+    color: var(--cyan);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    appearance: none;
+    box-shadow: inset 0 0 12px rgba(0, 228, 255, 0.06);
+  }
+
+  #brain-modal .modal-close:hover,
+  #brain-modal .modal-size-btn:hover {
+    border-color: rgba(0, 228, 255, 0.75);
+    box-shadow: 0 0 14px rgba(0, 228, 255, 0.2);
+  }
+
+  #brain-modal .modal-body {
+    padding: 18px;
+    overflow: auto;
+    min-height: 0;
+  }
+
+  #brain-modal .modal-brain-body {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  #brain-modal .brain-search-input {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid rgba(0, 228, 255, 0.28);
+    border-radius: 7px;
+    background: rgba(0, 9, 20, 0.88);
+    color: var(--ink);
+    padding: 0 12px;
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    outline: none;
+  }
+
+  #brain-modal .brain-tree,
+  #brain-modal .brain-preview {
+    min-height: 360px;
+    border: 1px solid rgba(0, 228, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(0, 228, 255, 0.04);
+    padding: 12px;
+    overflow: auto;
+  }
+
+  #brain-modal .brain-search {
+    margin-bottom: 10px;
+  }
+
+  #brain-modal .brain-empty,
+  #brain-modal .brain-loading {
+    min-height: 180px;
+    display: grid;
+    place-items: center;
+    color: rgba(214, 247, 255, 0.62);
+    text-align: center;
+  }
+
+  #brain-modal .brain-folder-header,
+  #brain-modal .brain-note {
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 6px;
+    color: rgba(214, 247, 255, 0.78);
+    cursor: pointer;
+  }
+
+  #brain-modal .brain-folder-header::before {
+    content: ">";
+    color: var(--cyan);
+    width: 12px;
+    flex: 0 0 12px;
+    transition: transform .16s ease;
+  }
+
+  #brain-modal .brain-folder.is-open > .brain-folder-header::before {
+    transform: rotate(90deg);
+  }
+
+  #brain-modal .brain-folder-header:hover,
+  #brain-modal .brain-note:hover,
+  #brain-modal .brain-note.active {
+    background: rgba(0, 228, 255, 0.1);
+    color: var(--cyan);
+  }
+
+  #brain-modal .brain-folder-items {
+    margin-left: 12px;
+    border-left: 1px solid rgba(0, 228, 255, 0.12);
+    padding-left: 8px;
+    display: none;
+  }
+
+  #brain-modal .brain-folder.is-open > .brain-folder-items {
+    display: block;
+  }
+
+  #brain-modal .brain-preview h1,
+  #brain-modal .brain-preview h2,
+  #brain-modal .brain-preview h3 {
+    color: var(--cyan);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: .04em;
+  }
+
+  #brain-modal .brain-preview a,
+  #brain-modal .brain-link {
+    color: var(--cyan);
+    cursor: pointer;
+  }
+
+  #brain-modal .brain-plain-preview {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--ink);
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+   }
+
+  #tab-terminal.active{
+    display:block !important;
+  }
+
+  .side-action-grid .hud-qbtn[data-quick-tab="terminal"]{
+    display:flex !important;
+  }
