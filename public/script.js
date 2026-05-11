@@ -786,160 +786,6 @@ window.setJarvisSpeaking = function(speaking) {
   setVoiceStatus(speaking ? 'speaking' : 'auto');
 };
 
-// ========== SCREEN CAPTURE (LIVE MODE) ==========
-let capturedScreen = null;    // base64 PNG of last captured frame
-let screenStream = null;       // persistent stream for live mode
-let liveScreenMode = false;    // when true: stream stays alive, fresh frame per query
-let hiddenVideo = null;        // off-screen video element bound to stream
-
-const screenBtn = document.getElementById('screen-btn');
-
-function stopScreenCapture() {
-  capturedScreen = null;
-  liveScreenMode = false;
-  if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
-  if (hiddenVideo) { hiddenVideo.srcObject = null; hiddenVideo.remove(); hiddenVideo = null; }
-  document.getElementById('screen-preview-box')?.remove();
-  screenBtn.classList.remove('active');
-}
-
-// Legacy alias (existing X button callback expects this name)
-const removeScreenPreview = stopScreenCapture;
-
-// Grab latest frame from the live stream (returns base64 dataURL)
-async function grabLatestFrame() {
-  if (!hiddenVideo || hiddenVideo.readyState < 2) return capturedScreen;
-  const canvas = document.createElement('canvas');
-  canvas.width = hiddenVideo.videoWidth || 1920;
-  canvas.height = hiddenVideo.videoHeight || 1080;
-  canvas.getContext('2d').drawImage(hiddenVideo, 0, 0);
-  capturedScreen = canvas.toDataURL('image/jpeg', 0.85); // jpeg for smaller payload
-  return capturedScreen;
-}
-
-async function captureScreen() {
-  // Toggle off if already active
-  if (liveScreenMode || capturedScreen) {
-    stopScreenCapture();
-    addTerminalLine(
-      currentLang === 'BR' ? '[system] Compartilhamento de tela desligado.' : '[system] Screen sharing stopped.',
-      'system-line'
-    );
-    return;
-  }
-
-  try {
-    screenStream = await navigator.mediaDevices.getDisplayMedia({
-      video: { displaySurface: 'monitor', width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 15 } },
-      audio: false,
-      preferCurrentTab: false,
-      selfBrowserSurface: 'exclude',
-      surfaceSwitching: 'exclude',
-      monitorTypeSurfaces: 'include'
-    });
-
-    // Bind stream to a hidden <video> so we can grab frames on demand
-    hiddenVideo = document.createElement('video');
-    hiddenVideo.autoplay = true;
-    hiddenVideo.muted = true;
-    hiddenVideo.playsInline = true;
-    hiddenVideo.style.position = 'fixed';
-    hiddenVideo.style.left = '-9999px';
-    hiddenVideo.srcObject = screenStream;
-    document.body.appendChild(hiddenVideo);
-    await new Promise((resolve) => {
-      hiddenVideo.onloadedmetadata = () => { hiddenVideo.play().then(resolve).catch(resolve); };
-    });
-
-    // User stops sharing via browser UI → clean up
-    screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-      stopScreenCapture();
-      addTerminalLine(
-        currentLang === 'BR' ? '[system] Compartilhamento encerrado pelo navegador.' : '[system] Sharing ended by browser.',
-        'system-line'
-      );
-    });
-
-    liveScreenMode = true;
-    await grabLatestFrame();
-    showScreenPreview(capturedScreen);
-    screenBtn.classList.add('active');
-
-    addTerminalLine(
-      currentLang === 'BR'
-        ? '[system] 🔴 LIVE — tela compartilhada. JARVIS vê em tempo real. Fale ou digite suas perguntas.'
-        : '[system] 🔴 LIVE — screen shared. JARVIS sees in real-time. Speak or type your questions.',
-      'system-line'
-    );
-  } catch (err) {
-    if (err.name !== 'NotAllowedError') {
-      addTerminalLine(`[error] Screen capture failed: ${err.message}`, 'error-line');
-    }
-    stopScreenCapture();
-  }
-}
-
-function showScreenPreview(dataUrl) {
-  document.getElementById('screen-preview-box')?.remove();
-
-  const preview = document.createElement('div');
-  preview.id = 'screen-preview-box';
-  preview.className = 'screen-preview live';
-  preview.innerHTML = `
-    <img src="${dataUrl}" alt="Live screen">
-    <span class="screen-label">LIVE</span>
-    <button class="remove-screen" title="Stop sharing">✕</button>
-  `;
-  preview.querySelector('.remove-screen').onclick = stopScreenCapture;
-
-  // Posicionar acima do terminal (canto inferior direito)
-  preview.style.cssText = 'position:fixed; bottom:200px; right:16px; width:360px; z-index:51;';
-  document.body.appendChild(preview);
-}
-
-function updatePreviewImage(dataUrl) {
-  const img = document.querySelector('#screen-preview-box img');
-  if (img) img.src = dataUrl;
-}
-
-async function analyzeScreen(userMessage) {
-  // In live mode, grab a FRESH frame for every question
-  if (liveScreenMode) {
-    await grabLatestFrame();
-    updatePreviewImage(capturedScreen);
-  }
-  if (!capturedScreen) return null;
-
-  const screen = capturedScreen;
-  setAvatarState('thinking');
-
-  try {
-    // Fast path: GPT-4o-mini vision (~1s, real-time)
-    const res = await fetch('/api/analyze-screen-fast', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: screen, message: userMessage, language: currentLang, saveHistory: true })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.response) return data.response;
-    }
-    // Fallback: Claude vision (deeper analysis)
-    const res2 = await fetch('/api/analyze-screen', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: screen, message: userMessage, language: currentLang, saveHistory: true })
-    });
-    const data2 = await res2.json();
-    return data2.response || null;
-  } catch (err) {
-    addTerminalLine(`[error] Screen analysis failed: ${err.message}`, 'error-line');
-    return null;
-  }
-}
-
-screenBtn?.addEventListener('click', captureScreen);
-
 // ========== CONCLAVE TOGGLE ==========
 let conclaveEnabled = localStorage.getItem('jarvis-conclave') !== 'false';
 
@@ -1173,7 +1019,8 @@ function getLocalDateTimeAnswer(text) {
 async function sendMessage(text, fromVoice = false) {
   const currentAttachment = window.JarvisAttachments?.get();
   const hasImageAttachment = window.JarvisAttachments?.isImage(currentAttachment);
-  if (!text.trim() && !capturedScreen && !hasImageAttachment) return;
+  const hasScreenCapture = window.JarvisScreenCapture?.hasCapture();
+  if (!text.trim() && !hasScreenCapture && !hasImageAttachment) return;
 
   if (fromVoice) {
     if (isRealtimeActive || realtimeActive) {
@@ -1217,8 +1064,8 @@ async function sendMessage(text, fromVoice = false) {
   // If screen is captured + Q&A → GPT-4o-mini vision (fast, real-time)
   // If screen is captured + build task → fall through to normal chat (Claude gets context via /api/chat)
   const isBuildTask = /\b(create|generate|build|make|write|produce|design|implement|develop|fix|update|report|crie|gere|construa|faça|escreva|implemente|corrija|analise|relatório)\b/i.test(text);
-  if ((capturedScreen || liveScreenMode) && !hasImageAttachment && !isBuildTask) {
-    const screenResponse = await analyzeScreen(text.trim());
+  if (hasScreenCapture && !hasImageAttachment && !isBuildTask) {
+    const screenResponse = await window.JarvisScreenCapture?.analyze(text.trim());
     if (screenResponse) {
       addTerminalLine(screenResponse, 'jarvis-line');
       playReceiveSound();
