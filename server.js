@@ -2644,15 +2644,63 @@ app.post('/api/chat', async (req, res) => {
     // Claude understands all languages natively — no translation needed (saves 200-500ms)
     const englishMessage = message;
 
+    const attachment = attachmentId ? attachments.get(attachmentId) : null;
     let fullMessage = englishMessage;
-    if (attachmentId && attachments.has(attachmentId)) {
-      fullMessage += `\n\n[ATTACHED FILE CONTENT]:\n${attachments.get(attachmentId)}`;
+    // Imagem anexada tem prioridade absoluta: nao usa screen/cursor nem executor.
+    if (attachment && attachment.type === 'image') {
+      fullMessage += `\n\n[ATTACHED IMAGE]: ${attachment.name}`;
+    } else if (attachment) {
+      fullMessage += `\n\n[ATTACHED FILE CONTENT]:\n${attachment.content || attachment}`;
     }
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Transfer-Encoding', 'chunked');
     res.setHeader('X-Accel-Buffering', 'no');
     res.setHeader('Cache-Control', 'no-cache');
+
+    if (attachment && attachment.type === 'image') {
+      if (!openai) {
+        res.write(`Recebi a imagem anexada "${attachment.name}", mas a análise visual exige OPENAI_API_KEY configurada.`);
+        try { res.end(); } catch {}
+        return;
+      }
+
+      try {
+        const langInstruction = language === 'BR'
+          ? 'Responda EXCLUSIVAMENTE em Português Brasileiro. Comece com "Analisei a imagem anexada". Seja direto e útil.'
+          : 'Respond EXCLUSIVELY in English. Start with "I analyzed the attached image". Be direct and useful.';
+        const visionRes = await rateLimitedOpenAI(() => openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: `${langInstruction}\n\nPergunta do usuário/User question: ${message}` },
+              { type: 'image_url', image_url: { url: attachment.dataUrl, detail: 'auto' } }
+            ]
+          }],
+          max_tokens: 700
+        }));
+        const answer = visionRes.choices[0]?.message?.content?.trim();
+        let finalAnswer = answer || (language === 'BR'
+          ? 'Analisei a imagem anexada, mas não consegui extrair uma descrição útil.'
+          : 'I analyzed the attached image, but could not extract a useful description.');
+        if (language === 'BR' && !/^Analisei a imagem anexada/i.test(finalAnswer)) {
+          finalAnswer = `Analisei a imagem anexada. ${finalAnswer}`;
+        } else if (language !== 'BR' && !/^I analyzed the attached image/i.test(finalAnswer)) {
+          finalAnswer = `I analyzed the attached image. ${finalAnswer}`;
+        }
+        res.write(finalAnswer);
+        appendHistoryFast('user', `[attached image: ${attachment.name}] ${message}`);
+        appendHistoryFast('assistant', finalAnswer);
+        try { res.end(); } catch {}
+        return;
+      } catch (visionErr) {
+        console.error('[JARVIS] Attached image vision error:', visionErr.message);
+        res.write(`Recebi a imagem anexada "${attachment.name}", mas não consegui analisá-la agora: ${visionErr.message}`);
+        try { res.end(); } catch {}
+        return;
+      }
+    }
 
     const confirmWriteId = isCodexWriteConfirmation(fullMessage);
     if (confirmWriteId) {
@@ -4271,7 +4319,14 @@ app.post('/api/attach', upload.single('file'), async (req, res) => {
     const ext = path.extname(req.file.originalname).toLowerCase();
     const attachmentId = `att-${Date.now()}`;
 
-    if (textExts.includes(ext)) {
+    if (req.file.mimetype?.startsWith('image/') || ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'].includes(ext)) {
+      const mime = req.file.mimetype || (ext === '.jpg' ? 'image/jpeg' : `image/${ext.replace('.', '') || 'png'}`);
+      const dataUrl = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
+      attachments.set(attachmentId, { type: 'image', name: req.file.originalname, mime, dataUrl });
+      setTimeout(() => { attachments.delete(attachmentId); }, 30 * 60 * 1000);
+      res.json({ attachmentId, name: req.file.originalname, type: 'image', mime });
+
+    } else if (textExts.includes(ext)) {
       // Plain text files — read directly
       const content = req.file.buffer.toString('utf-8');
       attachments.set(attachmentId, content);

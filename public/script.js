@@ -1037,10 +1037,6 @@ function playReceiveSound() { playTone(660, 80); }
 function playErrorSound() { playTone(440, 100); setTimeout(() => playTone(330, 150), 120); }
 
 // ========== TERMINAL RENDERING ==========
-function getTimestamp() {
-  return new Date().toLocaleTimeString('en-US', { hour12: false });
-}
-
 function addTerminalLine(text, type = '') {
   const line = document.createElement('div');
   line.className = `terminal-line ${type}`;
@@ -1152,47 +1148,40 @@ function addDownloadCard(fileName, filePath) {
   terminal.scrollTop = terminal.scrollHeight;
 }
 
-// ========== MARKDOWN RENDERING ==========
-function renderMarkdown(text) {
-  try {
-    if (typeof marked !== 'undefined') {
-      marked.setOptions({
-        highlight: function(code, lang) {
-          if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
-            return hljs.highlight(code, { language: lang }).value;
-          }
-          return code;
-        },
-        breaks: true,
-        gfm: true
-      });
-      return marked.parse(text);
-    }
-    return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  } catch {
-    return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
+function getLocalDateTimeAnswer(text) {
+  const normalized = String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const asksDay = /\b(que dia|dia e hoje|data de hoje|qual a data)\b/.test(normalized);
+  const asksTime = /\b(que horas|quantas horas|hora e|horario|agora sao)\b/.test(normalized);
+  if (!asksDay && !asksTime) return '';
+
+  const now = new Date();
+  const dayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  const h = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const dayName = dayNames[now.getDay()];
+
+  if (asksDay && asksTime) return `Hoje é ${dayName}, ${d}/${m}/${y}, e agora são ${h}:${min}.`;
+  if (asksDay) return `Hoje é ${dayName}, ${d}/${m}/${y}.`;
+  return `Agora são ${h}:${min}.`;
 }
 
-function addCopyButtons(container) {
-  container.querySelectorAll('pre').forEach(pre => {
-    pre.style.position = 'relative';
-    const btn = document.createElement('button');
-    btn.className = 'code-copy-btn';
-    btn.textContent = 'Copy';
-    btn.onclick = () => {
-      const code = pre.querySelector('code')?.textContent || pre.textContent;
-      navigator.clipboard.writeText(code);
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 1500);
-    };
-    pre.appendChild(btn);
-  });
+function isImageAttachment(attachment) {
+  if (!attachment) return false;
+  const name = String(attachment.name || '').toLowerCase();
+  const type = String(attachment.type || '').toLowerCase();
+  return type === 'image' || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
 }
 
 // ========== CHAT - SEND MESSAGE ==========
 async function sendMessage(text, fromVoice = false) {
-  if (!text.trim() && !capturedScreen) return;
+  const hasImageAttachment = isImageAttachment(currentAttachment);
+  if (!text.trim() && !capturedScreen && !hasImageAttachment) return;
 
   if (fromVoice) {
     if (isRealtimeActive || realtimeActive) {
@@ -1219,10 +1208,24 @@ async function sendMessage(text, fromVoice = false) {
   playSendSound();
   setAvatarState('thinking');
 
+  // Imagem anexada tem prioridade absoluta sobre data/hora e captura de tela.
+  if (hasImageAttachment && !text.trim()) text = 'Analise a imagem anexada.';
+
+  const localDateTimeAnswer = getLocalDateTimeAnswer(text);
+  if (!hasImageAttachment && localDateTimeAnswer) {
+    addTerminalLine(localDateTimeAnswer, 'jarvis-line');
+    playReceiveSound();
+    if (voiceEnabled && userGestureReceived) speakResponse(localDateTimeAnswer);
+    setAvatarState('idle');
+    scheduleNextListen(1200);
+    if (fromVoice) isVoiceRequestInFlight = false;
+    return;
+  }
+
   // If screen is captured + Q&A → GPT-4o-mini vision (fast, real-time)
   // If screen is captured + build task → fall through to normal chat (Claude gets context via /api/chat)
   const isBuildTask = /\b(create|generate|build|make|write|produce|design|implement|develop|fix|update|report|crie|gere|construa|faça|escreva|implemente|corrija|analise|relatório)\b/i.test(text);
-  if ((capturedScreen || liveScreenMode) && !isBuildTask) {
+  if ((capturedScreen || liveScreenMode) && !hasImageAttachment && !isBuildTask) {
     const screenResponse = await analyzeScreen(text.trim());
     if (screenResponse) {
       addTerminalLine(screenResponse, 'jarvis-line');
@@ -1328,7 +1331,10 @@ async function sendMessage(text, fromVoice = false) {
       }
     }
 
-    if (buffer.trim() && !buffer.startsWith('[build-start]')) processStreamLine(buffer);
+    if (buffer.trim() && !buffer.startsWith('[build-start]')) {
+      const handled = processStreamLine(buffer);
+      if (!handled && !claudeSilent) gptResponse += buffer + '\n';
+    }
 
     // GPT-mini response → render + speak (if not already fired by streaming)
     const cleanGpt = gptResponse.split('\n')
@@ -2255,7 +2261,12 @@ if (fileAttach) fileAttach.addEventListener('change', async (e) => {
     const res = await fetch('/api/attach', { method: 'POST', body: formData });
     const data = await res.json();
 
-    currentAttachment = { id: data.attachmentId, name: data.name };
+    currentAttachment = {
+      id: data.attachmentId,
+      name: data.name || file.name,
+      type: data.type || (file.type.startsWith('image/') ? 'image' : ''),
+      path: data.path || ''
+    };
     showAttachmentPreview(data.name);
   } catch (err) {
     addTerminalLine(`[error] Upload failed: ${err.message}`, 'error-line');
@@ -2266,10 +2277,11 @@ if (fileAttach) fileAttach.addEventListener('change', async (e) => {
 function showAttachmentPreview(name) {
   removeAttachmentPreview();
   const preview = document.createElement('div');
-  preview.className = 'attachment-preview';
+  preview.className = 'terminal-line info-line attachment-preview';
   preview.id = 'att-preview';
-  preview.innerHTML = `📎 ${name} <button class="remove-att" onclick="removeAttachment()">✕</button>`;
-  document.querySelector('.input-bar').insertAdjacentElement('beforebegin', preview);
+  preview.innerHTML = `<span class="msg">📎 ${name}</span><button class="remove-att" onclick="removeAttachment()">✕</button>`;
+  terminal.appendChild(preview);
+  terminal.scrollTop = terminal.scrollHeight;
 }
 
 function removeAttachmentPreview() {
@@ -3514,28 +3526,6 @@ initBottomPanelsToggle();
       }
     };
   }
-})();
-
-
-// === DATE + TIME WIDGET ===
-(function() {
-  var days = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
-  function updateDateTime() {
-    var now = new Date();
-    var dayEl = document.getElementById('date-day');
-    var timeEl = document.getElementById('date-time');
-    var fullEl = document.getElementById('date-full');
-    if (dayEl) dayEl.textContent = days[now.getDay()];
-    if (timeEl) timeEl.textContent = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    if (fullEl) {
-      var d = String(now.getDate()).padStart(2,'0');
-      var m = String(now.getMonth()+1).padStart(2,'0');
-      var y = String(now.getFullYear()).slice(-2);
-      fullEl.textContent = d + '/' + m + '/' + y;
-    }
-  }
-  updateDateTime();
-  setInterval(updateDateTime, 1000);
 })();
 
 
