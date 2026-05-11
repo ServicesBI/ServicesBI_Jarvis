@@ -730,6 +730,63 @@ let ttsPlaying = false;
 let userGestureReceived = false;
 let webSpeechRec = null;
 const canWebSpeech = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+const VOICE_STATUS_STATES = ['mute', 'ready', 'listening', 'thinking', 'speaking'];
+const VOICE_STATUS_LABELS = {
+  mute: 'MUTE',
+  ready: 'MUTE',
+  listening: 'LISTENING',
+  thinking: 'THINKING',
+  speaking: 'SPEAKING'
+};
+const VOICE_STATUS_CARD_LABELS = {
+  mute: 'MUTE',
+  ready: 'MUTE',
+  listening: 'LISTEN',
+  thinking: 'THINK',
+  speaking: 'SPEAK'
+};
+
+function getVoiceRestStatus() {
+  if (!voiceEnabled) return 'mute';
+  if (isRecording || isRealtimeActive || realtimeActive) return 'listening';
+  return 'mute';
+}
+
+function setVoiceStatus(state = 'ready') {
+  const status = state === 'idle' || state === 'auto' ? getVoiceRestStatus() : state;
+  const normalized = status === 'ready' ? 'mute' : (VOICE_STATUS_STATES.includes(status) ? status : getVoiceRestStatus());
+  const cardLabel = VOICE_STATUS_CARD_LABELS[normalized];
+  const centerLabel = VOICE_STATUS_LABELS[normalized];
+  const classes = VOICE_STATUS_STATES.map(s => `voice-status-${s}`);
+  const sideVoice = document.getElementById('side-voice-status');
+  const centerVoice = document.getElementById('jarvis-core-voice-status');
+  const bottomVoice = document.getElementById('jarvis-bottom-voice-status');
+  const micDot = document.getElementById('jarvis-mic-dot');
+  const voiceCard = document.querySelector('.voice-card');
+  const sideCard = sideVoice?.closest('.side-mini-card');
+
+  [micBtn, micDot, centerVoice, bottomVoice, voiceCard, sideCard].forEach(el => {
+    if (!el) return;
+    el.classList.remove(...classes, 'speaking');
+    el.classList.add(`voice-status-${normalized}`);
+  });
+  if (voiceCard && normalized === 'speaking') voiceCard.classList.add('speaking');
+  if (sideCard) {
+    normalized === 'listening' ? sideCard.classList.add('voz-mic-active') : sideCard.classList.remove('voz-mic-active');
+  }
+  if (sideVoice) sideVoice.textContent = cardLabel;
+  if (centerVoice) centerVoice.textContent = centerLabel;
+  if (bottomVoice) bottomVoice.textContent = centerLabel;
+  if (micBtn) {
+    micBtn.setAttribute('aria-label', `Voz: ${centerLabel}`);
+    micBtn.title = centerLabel;
+  }
+}
+
+window.setVoiceStatus = setVoiceStatus;
+window.setJarvisSpeaking = function(speaking) {
+  setVoiceStatus(speaking ? 'speaking' : 'auto');
+};
 
 // ========== SCREEN CAPTURE (LIVE MODE) ==========
 let capturedScreen = null;    // base64 PNG of last captured frame
@@ -1327,10 +1384,10 @@ function setAvatarState(state) {
     }
   }
   switch (state) {
-    case 'listening': avatarStatus.textContent = 'LISTENING'; break;
-    case 'thinking':  avatarStatus.textContent = 'PROCESSING'; break;
-    case 'speaking':  avatarStatus.textContent = 'SPEAKING'; break;
-    default:          avatarStatus.textContent = '';
+    case 'listening': setVoiceStatus('listening'); if (avatarStatus) avatarStatus.textContent = 'LISTENING'; break;
+    case 'thinking':  setVoiceStatus('thinking'); if (avatarStatus) avatarStatus.textContent = 'THINKING'; break;
+    case 'speaking':  setVoiceStatus('speaking'); if (avatarStatus) avatarStatus.textContent = 'SPEAKING'; break;
+    default:          setVoiceStatus('auto'); if (avatarStatus) avatarStatus.textContent = '';
   }
   // Update particle orb
   if (particleOrb) particleOrb.setState(state);
@@ -1403,6 +1460,7 @@ async function startRealtime() {
   if (realtimeConnecting) return; // guard against parallel connects
   realtimeConnecting = true;
   realtimeUserDisabled = false;
+  setVoiceStatus('listening');
   try {
     userGestureReceived = true;
     const tokenRes = await fetch('/api/realtime/session', {
@@ -1433,13 +1491,18 @@ async function startRealtime() {
       try {
         const ev = JSON.parse(e.data);
         if (ev.type === 'input_audio_buffer.speech_started') setAvatarState('listening');
-        if (ev.type?.startsWith('response.audio.') && ev.type !== 'response.audio.done') isJarvisSpeaking = true;
+        if (ev.type === 'input_audio_buffer.speech_stopped' || ev.type === 'input_audio_buffer.committed') setVoiceStatus('thinking');
+        if (ev.type?.startsWith('response.audio.') && ev.type !== 'response.audio.done') {
+          isJarvisSpeaking = true;
+          setAvatarState('speaking');
+        }
         if (ev.type === 'response.audio.done') {
           isJarvisSpeaking = false;
           lastVoiceCommandAt = Date.now();
           setAvatarState('idle');
         }
         if (ev.type === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
+          setVoiceStatus('thinking');
           // Translate user transcript to match the active language toggle
           (async () => {
             try {
@@ -1500,6 +1563,7 @@ async function startRealtime() {
     const cbtn = document.getElementById('continuous-btn');
     if (cbtn) { cbtn.style.color = 'var(--cyan)'; cbtn.style.background = 'rgba(0,212,255,0.1)'; }
     micBtn.classList.add('recording');
+    setVoiceStatus('listening');
   } catch (err) {
     addTerminalLine('[error] Realtime: ' + err.message, 'error-line');
     realtimeConnecting = false;
@@ -1529,6 +1593,7 @@ function stopRealtime() {
 
 async function routeVoiceCommand(text, { speak = true, announceRealtime = false } = {}) {
   try {
+    setVoiceStatus('thinking');
     const res = await fetch('/api/voice-command-router', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1571,6 +1636,7 @@ async function handleRealtimeTask(callId, argsJson) {
 
   isVoiceRequestInFlight = true;
   lastVoiceCommandAt = Date.now();
+  setVoiceStatus('thinking');
 
   try {
     const routed = await routeVoiceCommand(request, { speak: !realtimeActive, announceRealtime: realtimeActive });
@@ -1838,6 +1904,7 @@ async function startRecording() {
   } catch (err) {
     addTerminalLine(`[error] Microphone access denied: ${err.message}`, 'error-line');
     playErrorSound();
+    setAvatarState('idle');
   }
 }
 
@@ -2275,6 +2342,7 @@ document.getElementById('save-api-key')?.addEventListener('click', async () => {
 
 document.getElementById('config-voice')?.addEventListener('change', (e) => {
   voiceEnabled = e.target.checked;
+  setVoiceStatus('auto');
   addTerminalLine(`[system] Voice ${voiceEnabled ? 'enabled' : 'disabled'}`, 'system-line');
 });
 
@@ -2340,15 +2408,24 @@ if (micBtn) micBtn.addEventListener('click', () => {
   userGestureReceived = true;
   // Feedback visual imediato
   micBtn.classList.toggle('recording');
+  setVoiceStatus(micBtn.classList.contains('recording') ? 'listening' : 'ready');
   addTerminalLine(realtimeActive ? '[system] Desconectando voz...' : '[system] Conectando voz...', 'system-line');
   startRealtime().then(() => {
-    if (realtimeActive) micBtn.classList.add('recording');
-    else micBtn.classList.remove('recording');
+    if (realtimeActive) {
+      micBtn.classList.add('recording');
+      setVoiceStatus('listening');
+    } else {
+      micBtn.classList.remove('recording');
+      setVoiceStatus('auto');
+    }
   }).catch((err) => {
     micBtn.classList.remove('recording');
+    setVoiceStatus('auto');
     addTerminalLine(`[error] Voz: ${err.message || err}`, 'error-line');
   });
 });
+
+setVoiceStatus('ready');
 
 // Terminal direct input
 if (terminal && chatInput) terminal.addEventListener('click', () => chatInput.focus());
@@ -2898,7 +2975,7 @@ initBottomPanelsToggle();
     if (voiceEl) {
       const micBtn = document.getElementById('mic-btn');
       if (micBtn?.classList.contains('recording')) voiceEl.textContent = 'REC';
-      else voiceEl.textContent = 'READY';
+      else voiceEl.textContent = 'MUTE';
     }
   }
 

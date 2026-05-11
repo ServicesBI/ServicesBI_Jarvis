@@ -1299,6 +1299,8 @@
     align-items:center !important;
     gap:9px;
     padding:7px 10px !important;
+    min-width:0;
+    overflow:hidden;
   }
   .voz-mic-circle{
     width:28px;
@@ -1318,12 +1320,65 @@
     flex-direction:column;
     gap:3px;
     min-width:0;
+    max-width:calc(100% - 37px);
+    overflow:hidden;
   }
   .side-mini-card.voz-mic-active .voz-mic-circle{
     background:rgba(196,242,255,.15);
     border-color:#c4f2ff;
     color:#c4f2ff;
     box-shadow:0 0 8px rgba(196,242,255,.5);
+  }
+  .voz-card-enhanced.voice-status-mute{
+    border-color:rgba(255,93,108,.42);
+    color:#a8b2b8;
+    box-shadow:0 0 10px rgba(255,93,108,.12);
+  }
+  .voz-card-enhanced.voice-status-mute .side-value,
+  .voz-card-enhanced.voice-status-mute .voz-mic-circle{
+    color:#ff7b86;
+  }
+  .voz-card-enhanced.voice-status-mute .voz-mic-circle{
+    background:rgba(255,93,108,.08);
+    border-color:rgba(255,93,108,.42);
+  }
+  .voz-card-enhanced.voice-status-ready{
+    border-color:rgba(196,242,255,.44);
+  }
+  .voz-card-enhanced.voice-status-ready .side-value,
+  .voz-card-enhanced.voice-status-ready .voz-mic-circle{
+    color:#c4f2ff;
+  }
+  .voz-card-enhanced.voice-status-listening{
+    border-color:rgba(0,228,255,.9);
+    box-shadow:0 0 16px rgba(0,228,255,.45), inset 0 0 16px rgba(0,228,255,.08);
+  }
+  .voz-card-enhanced.voice-status-listening .side-value,
+  .voz-card-enhanced.voice-status-listening .voz-mic-circle{
+    color:#00e4ff;
+    text-shadow:0 0 10px rgba(0,228,255,.8);
+  }
+  .voz-card-enhanced.voice-status-listening .voz-mic-circle{
+    animation:micPulse .8s ease-in-out infinite;
+    background:rgba(0,228,255,.18);
+    border-color:#00e4ff;
+    box-shadow:0 0 12px rgba(0,228,255,.7);
+  }
+  .voz-card-enhanced.voice-status-thinking{
+    border-color:rgba(255,179,71,.68);
+    box-shadow:0 0 12px rgba(255,179,71,.22);
+  }
+  .voz-card-enhanced.voice-status-thinking .side-value,
+  .voz-card-enhanced.voice-status-thinking .voz-mic-circle{
+    color:#ffb347;
+  }
+  .voz-card-enhanced.voice-status-speaking{
+    border-color:rgba(72,170,255,.62);
+    box-shadow:0 0 12px rgba(72,170,255,.2);
+  }
+  .voz-card-enhanced.voice-status-speaking .side-value,
+  .voz-card-enhanced.voice-status-speaking .voz-mic-circle{
+    color:#48aaff;
   }
 
   .side-mini-card:hover,
@@ -1360,6 +1415,16 @@
     font-size:13px;
     line-height:1;
     text-shadow:0 0 8px rgba(0,228,255,.32);
+  }
+  .voz-card-enhanced #side-voice-status{
+    display:block;
+    max-width:100%;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:clip;
+    font-size:10px;
+    letter-spacing:.02em;
+    line-height:1;
   }
 
   .side-mega-card{
@@ -1577,6 +1642,22 @@
     filter:drop-shadow(0 0 6px rgba(0,162,183,.85));
     animation:micPulse .8s ease-in-out infinite;
   }
+  #jarvis-mic-dot.voice-status-ready{color:#c4f2ff;filter:drop-shadow(0 0 5px rgba(196,242,255,.55));}
+  #jarvis-mic-dot.voice-status-listening{color:#00e4ff;filter:drop-shadow(0 0 9px rgba(0,228,255,.9));animation:micPulse .8s ease-in-out infinite;}
+  #jarvis-mic-dot.voice-status-thinking{color:#ffb347;filter:drop-shadow(0 0 7px rgba(255,179,71,.65));}
+  #jarvis-mic-dot.voice-status-speaking{color:#48aaff;filter:drop-shadow(0 0 7px rgba(72,170,255,.7));}
+  #jarvis-mic-dot.voice-status-mute{color:#ff7b86;filter:drop-shadow(0 0 5px rgba(255,93,108,.45));}
+  #jarvis-core-voice-status.voice-status-ready{color:#c4f2ff;text-shadow:0 0 8px rgba(196,242,255,.55);}
+  #jarvis-core-voice-status.voice-status-listening{color:#00e4ff;text-shadow:0 0 14px rgba(0,228,255,.88);animation:micPulse .8s ease-in-out infinite;}
+  #jarvis-core-voice-status.voice-status-thinking{color:#ffb347;text-shadow:0 0 10px rgba(255,179,71,.62);}
+  #jarvis-core-voice-status.voice-status-speaking{color:#48aaff;text-shadow:0 0 10px rgba(72,170,255,.68);}
+  #jarvis-core-voice-status.voice-status-mute{color:#ff7b86;text-shadow:0 0 8px rgba(255,93,108,.45);}
+
+  .mic-btn.voice-status-ready{color:#c4f2ff;border-color:rgba(196,242,255,.5);}
+  .mic-btn.voice-status-listening{color:#00e4ff;border-color:#00e4ff;box-shadow:0 0 14px rgba(0,228,255,.45);animation:micPulse .8s ease-in-out infinite;}
+  .mic-btn.voice-status-thinking{color:#ffb347;border-color:rgba(255,179,71,.68);box-shadow:0 0 10px rgba(255,179,71,.2);}
+  .mic-btn.voice-status-speaking{color:#48aaff;border-color:rgba(72,170,255,.62);box-shadow:0 0 10px rgba(72,170,255,.18);}
+  .mic-btn.voice-status-mute{color:#ff7b86;border-color:rgba(255,93,108,.42);background:rgba(255,93,108,.08);}
   @keyframes micPulse{
     50%{opacity:.3;transform:scale(.85);}
   }
@@ -2474,7 +2555,7 @@
         <!-- center readout -->
         <div class="readout">
           <div class="stack">
-            <div class="tag">Standby - Listening</div>
+            <div class="tag" id="jarvis-core-voice-status">MUTE</div>
             <div class="name">J.A.R.V.I.S</div>
             <div class="desc">v9.04.1 - Online</div>
           </div>
@@ -2518,7 +2599,7 @@
             </div>
             <div class="voz-card-text">
               <b>VOZ</b>
-              <span class="side-value" id="side-voice-status">READY</span>
+              <span class="side-value" id="side-voice-status">MUTE</span>
             </div>
           </div>
           <div class="side-mini-card"><b>Executor</b><span class="side-value">idle</span></div>
@@ -2544,7 +2625,7 @@
       <div role="button" tabindex="0"><span>Agentes</span><b id="obs-val-agents">15</b></div>
       <div id="bottom-uptime">00:00</div>
       <span id="jarvis-mic-dot"></span>
-      <span id="jarvis-voice-status">READY</span>
+      <span id="jarvis-bottom-voice-status">MUTE</span>
       <button id="jarvis-voice-hotspot" type="button"></button>
       <button id="btn-launch-pet" type="button"><span>PET</span></button>
     </div>
@@ -2804,13 +2885,9 @@ setInterval(updateJarvisClock, 1000);
    MIC / SPEAKING STATE
    ========================================================= */
 window.setJarvisSpeaking = function(speaking){
-  const card = document.querySelector('.voice-card');
-  const dot  = document.getElementById('jarvis-mic-dot');
-  const lbl  = document.getElementById('jarvis-voice-status');
-  if(card){ speaking ? card.classList.add('speaking') : card.classList.remove('speaking'); }
-  if(dot)  dot.style.color = speaking ? '#00a2b7' : '';
-  if(dot)  dot.style.filter = speaking ? 'drop-shadow(0 0 6px rgba(0,162,183,.9))' : '';
-  if(lbl)  lbl.textContent = speaking ? 'TALK' : 'READY';
+  if (typeof window.setVoiceStatus === 'function') {
+    window.setVoiceStatus(speaking ? 'speaking' : 'ready');
+  }
 };
 
 /* =========================================================
@@ -2946,7 +3023,7 @@ pumpStream('stream-right');
     'route packet 0x4F2A -> relay/london',
     'bind sensor.suite --priority=critical',
     'engage threat-matrix --watch sectors',
-    'standby - awaiting voice command'
+    'voice system ready'
   ];
   const out = document.getElementById('typed');
   if (!out) return;
@@ -3155,9 +3232,8 @@ pumpStream('stream-right');
     const mic = document.getElementById('mic-btn');
     const voz = document.getElementById('side-voice-status')?.closest('.side-mini-card');
     if(!voz) return;
-    mic?.classList.contains('recording')
-      ? voz.classList.add('voz-mic-active')
-      : voz.classList.remove('voz-mic-active');
+    const active = mic?.classList.contains('voice-status-listening');
+    active ? voz.classList.add('voz-mic-active') : voz.classList.remove('voz-mic-active');
   }
   function init(){
     const mic = document.getElementById('mic-btn');
@@ -3593,4 +3669,3 @@ function closeIngestModalSafe() {
 <script src="script.js"></script>
 </body>
 </html>
-
