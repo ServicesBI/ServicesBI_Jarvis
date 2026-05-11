@@ -789,20 +789,21 @@ window.setJarvisSpeaking = function(speaking) {
 // ========== CONCLAVE TOGGLE ==========
 let conclaveEnabled = localStorage.getItem('jarvis-conclave') !== 'false';
 
-function initConclaveToggle() {
+function syncConclaveVisual() {
   const cb = document.getElementById('conclave-checkbox');
   const chip = cb?.closest('.mega-chip');
   if (!cb) return;
 
   cb.checked = conclaveEnabled;
-  if (!conclaveEnabled) chip?.classList.add('conclave-off');
+  if (conclaveEnabled) chip?.classList.remove('conclave-off');
+  else chip?.classList.add('conclave-off');
+}
 
-  cb.addEventListener('change', () => {
-    conclaveEnabled = cb.checked;
-    localStorage.setItem('jarvis-conclave', conclaveEnabled);
-    if (conclaveEnabled) chip?.classList.remove('conclave-off');
-    else chip?.classList.add('conclave-off');
-  });
+function setConclaveEnabled(enabled) {
+  conclaveEnabled = !!enabled;
+  localStorage.setItem('jarvis-conclave', conclaveEnabled);
+  syncConclaveVisual();
+  return conclaveEnabled;
 }
 
 // ========== LANGUAGE STATE ==========
@@ -2132,8 +2133,7 @@ function updateClock() {
 }
 
 // ========== CONFIG ==========
-document.getElementById('save-api-key')?.addEventListener('click', async () => {
-  const key = document.getElementById('config-api-key').value;
+async function saveApiKeyConfig(key) {
   if (!key) return;
   try {
     await fetch('/api/config', {
@@ -2145,16 +2145,22 @@ document.getElementById('save-api-key')?.addEventListener('click', async () => {
   } catch (err) {
     addTerminalLine(`[error] Failed to save config: ${err.message}`, 'error-line');
   }
-});
+}
 
-document.getElementById('config-voice')?.addEventListener('change', (e) => {
-  voiceEnabled = e.target.checked;
+function setConfigVoiceEnabled(enabled) {
+  voiceEnabled = !!enabled;
   setVoiceStatus('auto');
   addTerminalLine(`[system] Voice ${voiceEnabled ? 'enabled' : 'disabled'}`, 'system-line');
-});
+  return voiceEnabled;
+}
 
-document.getElementById('config-wakeword')?.addEventListener('change', (e) => {
-  wakeWordEnabled = e.target.checked;
+function setConfigWakeWordEnabled(enabled) {
+  const desired = !!enabled;
+  if (desired && wakeWordEnabled) {
+    localStorage.setItem('jarvis-wakeword-disabled', 'false');
+    return wakeWordEnabled;
+  }
+  wakeWordEnabled = desired;
   localStorage.setItem('jarvis-wakeword-disabled', wakeWordEnabled ? 'false' : 'true');
   if (wakeWordEnabled) {
     try {
@@ -2162,25 +2168,34 @@ document.getElementById('config-wakeword')?.addEventListener('change', (e) => {
       addTerminalLine('[system] Wake word "Jarvis" activated', 'system-line');
     } catch (err) {
       wakeWordEnabled = false;
-      e.target.checked = false;
       addTerminalLine(`[error] Wake word failed: ${err.message || err}`, 'error-line');
     }
   } else {
     stopWakeWord();
     addTerminalLine('[system] Wake word deactivated', 'system-line');
   }
-});
-
-// TTS Voice selector — persists to localStorage
-const ttsVoiceSelect = document.getElementById('config-tts-voice');
-if (ttsVoiceSelect) {
-  ttsVoiceSelect.value = ttsVoice;
-  ttsVoiceSelect.addEventListener('change', (e) => {
-    ttsVoice = e.target.value;
-    localStorage.setItem('ttsVoice', ttsVoice);
-    addTerminalLine(`[info] TTS voice set to: ${ttsVoice}`, 'info-line');
-  });
+  return wakeWordEnabled;
 }
+
+function setConfigTtsVoice(value) {
+  ttsVoice = value;
+  localStorage.setItem('ttsVoice', ttsVoice);
+  addTerminalLine(`[info] TTS voice set to: ${ttsVoice}`, 'info-line');
+  return ttsVoice;
+}
+
+window.JarvisConfigBridge = {
+  saveApiKey: saveApiKeyConfig,
+  setVoiceEnabled: setConfigVoiceEnabled,
+  getVoiceEnabled: () => voiceEnabled,
+  setWakeWordEnabled: setConfigWakeWordEnabled,
+  getWakeWordEnabled: () => wakeWordEnabled,
+  setTtsVoice: setConfigTtsVoice,
+  getTtsVoice: () => ttsVoice,
+  setConclaveEnabled,
+  getConclaveEnabled: () => conclaveEnabled,
+  syncConclaveVisual
+};
 
 // ========== AUTO-START WAKE WORD ==========
 // JARVIS listens for his name — only if user hasn't explicitly disabled it
@@ -2263,7 +2278,6 @@ setInterval(updateClock, 1000);
 setInterval(updateStats, 4000);
 updateStats();
 initLangToggle();
-initConclaveToggle();
 initContinuousBtn();
 initRealtimeBtn();
 initBottomPanelsToggle();
@@ -3050,19 +3064,8 @@ initBottomPanelsToggle();
 
   // ── Ingest Modal ──
   var ingestModal = document.getElementById('ingest-modal');
-  var btnIngest = document.getElementById('btn-ingest');
-  var ingestClose = document.getElementById('ingest-close');
-  var ingestCancel = document.getElementById('ingest-cancel');
   var ingestSubmit = document.getElementById('ingest-submit');
   var ingestStatus = document.getElementById('ingest-status');
-
-  if (btnIngest) {
-    btnIngest.addEventListener('click', function() {
-      if (ingestModal) ingestModal.style.display = 'flex';
-    });
-  }
-  if (ingestClose) ingestClose.addEventListener('click', function() { ingestModal.style.display = 'none'; });
-  if (ingestCancel) ingestCancel.addEventListener('click', function() { ingestModal.style.display = 'none'; });
 
   // Ingest tabs
   document.querySelectorAll('.ingest-tab').forEach(function(tab) {
@@ -3157,8 +3160,6 @@ initBottomPanelsToggle();
   // ── Brain Viewer Modal ──
   var brainModal = document.getElementById('brain-modal');
   var btnBrain = document.getElementById('btn-brain');
-  var brainClose = document.getElementById('brain-close');
-  var brainMaximize = document.getElementById('brain-maximize');
   var brainTree = document.getElementById('brain-tree');
   var brainPreview = document.getElementById('brain-preview');
   var brainSearch = document.getElementById('brain-search');
@@ -3171,21 +3172,6 @@ initBottomPanelsToggle();
       }
     });
   }
-  if (brainClose) brainClose.addEventListener('click', function() { brainModal.style.display = 'none'; });
-  if (brainMaximize) {
-    brainMaximize.addEventListener('click', function() {
-      var card = brainModal.querySelector('.modal-brain');
-      card.classList.toggle('maximized');
-      brainMaximize.textContent = card.classList.contains('maximized') ? '\u2750' : '\u2B1C';
-    });
-  }
-
-  // Close modals on overlay click
-  document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) overlay.style.display = 'none';
-    });
-  });
 
   // Load brain tree
   async function loadBrainTree() {
