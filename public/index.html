@@ -1796,6 +1796,27 @@
   .chat-input:focus,
   .config-input:focus,
   .config-select:focus{border-color:rgba(0,228,255,.48)}
+  .config-panel select,
+  .config-select,
+  #config-tts-voice{
+    background:#020c1a;
+    color:#dffaff;
+    border:1px solid rgba(0,228,255,.35);
+    font-family:'Share Tech Mono', monospace;
+    color-scheme:dark;
+  }
+  .config-panel select option,
+  .config-select option,
+  #config-tts-voice option{
+    background:#020c1a;
+    color:#dffaff;
+  }
+  .config-panel select option:checked,
+  .config-select option:checked,
+  #config-tts-voice option:checked{
+    background:#063144;
+    color:#c4f2ff;
+  }
   .mic-btn,
   .screen-btn,
   .attach-btn,
@@ -2838,7 +2859,7 @@ function tick(){
   if (tEl) tEl.textContent = `${String(local.getHours()).padStart(2,'0')}:${String(local.getMinutes()).padStart(2,'0')}:${String(local.getSeconds()).padStart(2,'0')}`;
   if (upEl) upEl.textContent = `${hh}:${mm}:${ss}`;
 
-  const _days=['DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO'];
+  const _days=['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'];
   const _dayEl=document.getElementById('date-day');
   const _timeEl=document.getElementById('date-time');
   const _fullEl=document.getElementById('date-full');
@@ -2873,7 +2894,7 @@ function updateJarvisClock(){
   setTextSafe('jarvas-uptime',  `${hh}:${mm}:${ss}`);
   setTextSafe('bottom-uptime',  `${mm}:${ss}`);
   // Top datetime widget
-  const days=['DOMINGO','SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO'];
+  const days=['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'];
   setTextSafe('date-day',  days[now.getDay()]);
   setTextSafe('date-time', `${h}:${mi}:${s}`);
   setTextSafe('date-full', `${d}/${mo}/${String(yr).slice(-2)}`);

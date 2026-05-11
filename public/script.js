@@ -3519,13 +3519,13 @@ initBottomPanelsToggle();
 
 // === DATE + TIME WIDGET ===
 (function() {
-  var days = ['Domingo', 'Segunda-feira', 'Terca-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sabado'];
+  var days = ['DOMINGO', 'SEGUNDA-FEIRA', 'TERÇA-FEIRA', 'QUARTA-FEIRA', 'QUINTA-FEIRA', 'SEXTA-FEIRA', 'SÁBADO'];
   function updateDateTime() {
     var now = new Date();
     var dayEl = document.getElementById('date-day');
     var timeEl = document.getElementById('date-time');
     var fullEl = document.getElementById('date-full');
-    if (dayEl) dayEl.textContent = days[now.getDay()].toUpperCase();
+    if (dayEl) dayEl.textContent = days[now.getDay()];
     if (timeEl) timeEl.textContent = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     if (fullEl) {
       var d = String(now.getDate()).padStart(2,'0');
