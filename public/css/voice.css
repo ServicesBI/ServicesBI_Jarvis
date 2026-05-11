@@ -459,13 +459,19 @@
     display:flex;
     flex-direction:column;
     gap:12px;
+    box-sizing:border-box;
+    height:calc(100vh - 128px);
+    min-height:0;
+    padding-bottom:18px;
   }
   .terminal{
     display:flex;
     flex-direction:column;
-    min-height:calc(100vh - 240px);
+    flex:1 1 auto;
+    min-height:0;
     border:1px solid rgba(0,228,255,.18);
     background:rgba(0,5,10,.78);
+    overflow:hidden;
   }
   .terminal-topbar{
     display:flex;
@@ -494,7 +500,8 @@
     display:flex;
     align-items:center;
     gap:8px;
-    padding:12px 0 0;
+    flex:0 0 auto;
+    padding:12px 0 4px;
   }
   .input-wrap{position:relative; flex:1}
   .chat-input,
