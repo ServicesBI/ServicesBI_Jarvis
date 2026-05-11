@@ -7,7 +7,6 @@ const sendBtn = document.getElementById('send-btn');
 const micBtn = document.getElementById('mic-btn');
 const avatarContainer = document.querySelector('.avatar-container');
 const avatarStatus = document.getElementById('avatar-status');
-const fileAttach = document.getElementById('file-attach');
 
 // ========== HOLOGRAPHIC BRAIN 3D — Three.js Iron Man ==========
 class NeuralTree {
@@ -704,7 +703,6 @@ document.addEventListener('visibilitychange', () => {
 let isRecording = false;
 let mediaRecorder = null;
 let audioChunks = [];
-let currentAttachment = null;
 let voiceEnabled = true;
 let ttsVoice = localStorage.getItem('ttsVoice') || 'ash';
 let isRealtimeActive = false;
@@ -1171,16 +1169,10 @@ function getLocalDateTimeAnswer(text) {
   return `Agora são ${h}:${min}.`;
 }
 
-function isImageAttachment(attachment) {
-  if (!attachment) return false;
-  const name = String(attachment.name || '').toLowerCase();
-  const type = String(attachment.type || '').toLowerCase();
-  return type === 'image' || /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name);
-}
-
 // ========== CHAT - SEND MESSAGE ==========
 async function sendMessage(text, fromVoice = false) {
-  const hasImageAttachment = isImageAttachment(currentAttachment);
+  const currentAttachment = window.JarvisAttachments?.get();
+  const hasImageAttachment = window.JarvisAttachments?.isImage(currentAttachment);
   if (!text.trim() && !capturedScreen && !hasImageAttachment) return;
 
   if (fromVoice) {
@@ -1273,8 +1265,7 @@ async function sendMessage(text, fromVoice = false) {
     const body = { message: text, fromVoice, language: currentLang, conclaveEnabled };
     if (currentAttachment) {
       body.attachmentId = currentAttachment.id;
-      currentAttachment = null;
-      removeAttachmentPreview();
+      window.JarvisAttachments?.clear();
     }
 
     const response = await fetch('/api/chat', {
@@ -2248,49 +2239,6 @@ async function loadFiles() {
   } catch (err) {
     document.getElementById('file-list').innerHTML = '<div class="file-empty">Error loading files.</div>';
   }
-}
-
-// ========== ATTACHMENT ==========
-if (fileAttach) fileAttach.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await fetch('/api/attach', { method: 'POST', body: formData });
-    const data = await res.json();
-
-    currentAttachment = {
-      id: data.attachmentId,
-      name: data.name || file.name,
-      type: data.type || (file.type.startsWith('image/') ? 'image' : ''),
-      path: data.path || ''
-    };
-    showAttachmentPreview(data.name);
-  } catch (err) {
-    addTerminalLine(`[error] Upload failed: ${err.message}`, 'error-line');
-  }
-  fileAttach.value = '';
-});
-
-function showAttachmentPreview(name) {
-  removeAttachmentPreview();
-  const preview = document.createElement('div');
-  preview.className = 'terminal-line info-line attachment-preview';
-  preview.id = 'att-preview';
-  preview.innerHTML = `<span class="msg">📎 ${name}</span><button class="remove-att" onclick="removeAttachment()">✕</button>`;
-  terminal.appendChild(preview);
-  terminal.scrollTop = terminal.scrollHeight;
-}
-
-function removeAttachmentPreview() {
-  document.getElementById('att-preview')?.remove();
-}
-
-function removeAttachment() {
-  currentAttachment = null;
-  removeAttachmentPreview();
 }
 
 // ========== STAT CARD POLLING ==========
