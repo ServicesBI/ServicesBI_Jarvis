@@ -2464,83 +2464,7 @@ initBottomPanelsToggle();
     });
   });
 
-  // ── Weather Widget ──
-  async function loadWeather() {
-    try {
-      // Detectar cidade: GPS (mais preciso) → múltiplos serviços IP → fallback
-      let city = 'Presidente Prudente';
-
-      // Método 1: GPS do browser (mais preciso)
-      try {
-        const pos = await new Promise((resolve, reject) => {
-          if (!navigator.geolocation) reject('no geo');
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000, maximumAge: 300000 });
-        });
-        const lat = pos.coords.latitude, lon = pos.coords.longitude;
-        // Reverse geocode via wttr.in
-        const geoR = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
-        if (geoR.ok) {
-          const geoD = await geoR.json();
-          const area = geoD.nearest_area?.[0];
-          if (area) city = area.areaName?.[0]?.value || area.region?.[0]?.value || city;
-        }
-      } catch {
-        // Método 2: IP geolocation (fallback)
-        try {
-          const geoRes = await fetch('https://ipapi.co/json/');
-          if (geoRes.ok) {
-            const geo = await geoRes.json();
-            if (geo.city) city = geo.city;
-          }
-        } catch {
-          try {
-            const geoRes2 = await fetch('https://ip-api.com/json/?fields=city');
-            if (geoRes2.ok) {
-              const geo2 = await geoRes2.json();
-              if (geo2.city) city = geo2.city;
-            }
-          } catch {}
-        }
-      }
-
-      // Primeiro tenta endpoint local (se JARVIS server tiver)
-      let data = null;
-      try {
-        const r = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
-        if (r.ok) data = await r.json();
-      } catch {}
-
-      // Fallback: wttr.in direto (nao precisa de server)
-      if (!data) {
-        const r2 = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
-        if (r2.ok) {
-          const w = await r2.json();
-          const cur = w.current_condition[0];
-          data = {
-            city,
-            temp: cur.temp_C,
-            desc: cur.lang_pt?.[0]?.value || cur.weatherDesc[0].value
-          };
-        }
-      }
-
-      if (data) {
-        const wCity = document.getElementById('weather-city');
-        const wTemp = document.getElementById('weather-temp');
-        const wDesc = document.getElementById('weather-desc');
-        if (wCity) wCity.textContent = data.city.toUpperCase();
-        if (wTemp) wTemp.textContent = `${data.temp}°C`;
-        if (wDesc) wDesc.textContent = data.desc;
-      }
-    } catch (err) {
-      const wCity = document.getElementById('weather-city');
-      const wTemp = document.getElementById('weather-temp');
-      const wDesc = document.getElementById('weather-desc');
-      if (wCity) wCity.textContent = 'OFFLINE';
-      if (wTemp) wTemp.textContent = '--°C';
-      if (wDesc) wDesc.textContent = 'sem conexao';
-    }
-  }
+  // Weather logic moved to public/js/weather.js.
 
   // ── System Health Bars ──
   // ── Active Model Display ──
@@ -2607,10 +2531,6 @@ initBottomPanelsToggle();
     }
   };
 
-  // ── Init ──
-  loadWeather();
-  // Periodic updates
-  setInterval(loadWeather, 15 * 60 * 1000);     // 15 min
 })();
 
 // ═══════════════════════════════════════════════
@@ -2990,5 +2910,3 @@ initBottomPanelsToggle();
     };
   }
 })();
-
-
