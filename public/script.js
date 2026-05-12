@@ -1164,6 +1164,9 @@ async function sendMessage(text, fromVoice = false) {
   }
 }
 
+window.sendMessage = sendMessage;
+window.JarvisTerminalChat?.bindSendHandlers(sendMessage);
+
 // ========== AVATAR STATES ==========
 function setAvatarState(state) {
   if (avatarContainer) {
@@ -2124,14 +2127,7 @@ setTimeout(() => {
 }, 2000);
 
 // ========== EVENT LISTENERS ==========
-if (sendBtn) sendBtn.addEventListener('click', () => sendMessage(chatInput ? chatInput.value : ''));
-
-if (chatInput) chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage(chatInput.value);
-  }
-});
+// Terminal send/focus listeners moved to public/js/terminal-chat.js.
 
 if (micBtn) micBtn.addEventListener('click', () => {
   userGestureReceived = true;
@@ -2157,8 +2153,6 @@ if (micBtn) micBtn.addEventListener('click', () => {
 setVoiceStatus('ready');
 
 // Terminal direct input
-if (terminal && chatInput) terminal.addEventListener('click', () => chatInput.focus());
-
 // Agent chip click → insert @mention + highlight model
 document.querySelectorAll('.agent-chip[data-agent]').forEach(chip => {
   chip.style.cursor = 'pointer';

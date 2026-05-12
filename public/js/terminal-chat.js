@@ -3,6 +3,18 @@
     return document.getElementById('terminal-output');
   }
 
+  function getTerminalShell() {
+    return document.getElementById('terminal');
+  }
+
+  function getChatInput() {
+    return document.getElementById('chat-input');
+  }
+
+  function getSendButton() {
+    return document.getElementById('send-btn');
+  }
+
   function addTerminalLine(text, type = '') {
     const terminal = getTerminalOutput();
     if (!terminal) return;
@@ -67,12 +79,48 @@
     return `Agora s\u00E3o ${h}:${min}.`;
   }
 
+  function resolveSendMessage(sendMessage) {
+    return typeof sendMessage === 'function' ? sendMessage : window.sendMessage;
+  }
+
+  function bindSendHandlers(sendMessage) {
+    const terminal = getTerminalShell();
+    const chatInput = getChatInput();
+    const sendBtn = getSendButton();
+    const send = resolveSendMessage(sendMessage);
+
+    if (sendBtn && !sendBtn.dataset.terminalChatSendBound) {
+      sendBtn.dataset.terminalChatSendBound = '1';
+      sendBtn.addEventListener('click', () => {
+        const activeSend = resolveSendMessage(send);
+        if (typeof activeSend === 'function') activeSend(chatInput ? chatInput.value : '');
+      });
+    }
+
+    if (chatInput && !chatInput.dataset.terminalChatEnterBound) {
+      chatInput.dataset.terminalChatEnterBound = '1';
+      chatInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          const activeSend = resolveSendMessage(send);
+          if (typeof activeSend === 'function') activeSend(chatInput.value);
+        }
+      });
+    }
+
+    if (terminal && chatInput && !terminal.dataset.terminalChatFocusBound) {
+      terminal.dataset.terminalChatFocusBound = '1';
+      terminal.addEventListener('click', () => chatInput.focus());
+    }
+  }
+
   window.addTerminalLine = addTerminalLine;
   window.addDownloadCard = addDownloadCard;
   window.getLocalDateTimeAnswer = getLocalDateTimeAnswer;
   window.JarvisTerminalChat = {
     addTerminalLine,
     addDownloadCard,
-    getLocalDateTimeAnswer
+    getLocalDateTimeAnswer,
+    bindSendHandlers
   };
 })();
