@@ -712,15 +712,6 @@ let currentTtsAudio = null;
 let lastVoiceCommandAt = 0;
 const VOICE_COMMAND_COOLDOWN_MS = 1000;
 
-// Realtime API supports a different voice set than TTS.
-// Map TTS voice to nearest valid Realtime voice.
-const REALTIME_VOICES = new Set(['alloy','ash','ballad','coral','echo','sage','shimmer','verse','marin','cedar']);
-const REALTIME_VOICE_MAP = { onyx: 'ash', nova: 'shimmer', fable: 'sage' };
-function getRealtimeVoice() {
-  if (REALTIME_VOICES.has(ttsVoice)) return ttsVoice;
-  return REALTIME_VOICE_MAP[ttsVoice] || 'ash';
-}
-
 let wakeWordEnabled = false;
 let wakeWordRecognition = null;
 let ttsQueue = [];
@@ -1186,7 +1177,7 @@ async function startRealtime() {
       method: 'POST', headers: {'Content-Type':'application/json'},
       // Realtime API only supports: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar
       // TTS voices like onyx, nova, fable are NOT supported — always map to a valid Realtime voice
-      body: JSON.stringify({ language: currentLang, voice: getRealtimeVoice() })
+      body: JSON.stringify({ language: currentLang, voice: window.JarvisVoiceTTS.getRealtimeVoice(ttsVoice) })
     });
     const sess = await tokenRes.json();
     if (!sess.client_secret?.value) throw new Error(sess.error || 'No ephemeral token');
@@ -1739,24 +1730,13 @@ function speakResponse(text) {
 
 async function _ttsPlay(text, playbackId = _ttsPlaybackId) {
   // Clean text for TTS — remove code blocks, markdown, bracket prefixes
-  const cleanText = text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/\[.*?\]/g, '')
-    .replace(/[#*_`~>|]/g, '')
-    .replace(/\n+/g, ' ')
-    .trim();
-
-  // Split into sentences, max 3 for voice brevity
-  const sentences = cleanText
-    .split(/(?<=[.!?])\s+/)
-    .filter(s => s.trim().length > 5)
-    .slice(0, 3);
+  const sentences = window.JarvisVoiceTTS.getSpeechSentences(text);
 
   if (sentences.length === 0) return;
   if (playbackId !== _ttsPlaybackId) return;
 
   // Combine into one TTS call for speed (avoid multiple round-trips)
-  const ttsText = sentences.join(' ').slice(0, 500);
+  const ttsText = window.JarvisVoiceTTS.prepareTtsText(text);
 
   setAvatarState('speaking');
   isJarvisSpeaking = true;
