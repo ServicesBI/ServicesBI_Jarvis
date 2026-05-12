@@ -2543,128 +2543,6 @@ initBottomPanelsToggle();
   }
 
   // ── System Health Bars ──
-  let selectedExecutor = 'auto';
-  let executorSelectReady = false;
-
-  function normalizeHudExecutor(mode) {
-    return ['auto', 'claude', 'codex'].includes(mode) ? mode : 'auto';
-  }
-
-  function getExecutorSelect() {
-    return document.getElementById('executor-select');
-  }
-
-  function formatProviderStatus(provider) {
-    const status = provider?.status || 'unknown';
-    if (status === 'ok') return { text: 'OK', ok: true };
-    if (status === 'not_installed') return { text: 'OFF', ok: false };
-    if (status === 'auth') return { text: 'AUTH', ok: false };
-    if (status === 'checking') return { text: 'CHECK', ok: false };
-    if (status === 'error' || status === 'limit' || status === 'off') return { text: 'ERROR', ok: false };
-    return { text: 'UNKNOWN', ok: false };
-  }
-
-  function getAutoExecutorStatus(providers) {
-    if (providers?.claude?.status === 'ok') return { status: 'ok' };
-    if (providers?.codex?.status === 'ok') return { status: 'ok' };
-    return { status: 'error' };
-  }
-
-  function setExecutorHudStatus(providerStatus) {
-    const barClaude = document.getElementById('bar-claude');
-    const sClaude = document.getElementById('bar-claude-status');
-    const dotClaude = document.getElementById('dot-claude');
-    const formatted = formatProviderStatus(providerStatus);
-    if (barClaude) barClaude.className = formatted.ok ? 'bar-fill ok' : 'bar-fill err';
-    if (dotClaude) dotClaude.className = formatted.ok ? 'server-dot' : 'server-dot err';
-    if (sClaude) {
-      sClaude.textContent = formatted.text;
-      sClaude.style.color = formatted.ok ? 'var(--green, #00ff88)' : '#ff4455';
-    }
-  }
-
-  async function initExecutorSelect() {
-    const select = getExecutorSelect();
-    if (!select || executorSelectReady) return;
-    executorSelectReady = true;
-
-    try {
-      const r = await fetch('/api/executor/mode', { cache: 'no-store' });
-      if (r.ok) {
-        const data = await r.json();
-        selectedExecutor = normalizeHudExecutor(data.mode);
-        select.value = selectedExecutor;
-      }
-    } catch {
-      selectedExecutor = normalizeHudExecutor(select.value);
-    }
-    updateHealth();
-
-    select.addEventListener('change', async () => {
-      const mode = normalizeHudExecutor(select.value);
-      selectedExecutor = mode;
-      try {
-        const r = await fetch('/api/executor/mode', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode })
-        });
-        if (!r.ok) throw new Error('executor mode update failed');
-      } catch {
-        setExecutorHudStatus({ status: 'error' });
-        return;
-      }
-      updateHealth();
-    });
-  }
-
-  async function updateHealth() {
-    const barApi = document.getElementById('bar-api');
-    const barVoice = document.getElementById('bar-voice');
-    const sApi = document.getElementById('bar-api-status');
-    const sVoice = document.getElementById('bar-voice-status');
-    const activeExecutor = normalizeHudExecutor(getExecutorSelect()?.value || selectedExecutor);
-    selectedExecutor = activeExecutor;
-
-    try {
-      // Compat: AbortSignal.timeout() so existe em Chrome 102+. Usa AbortController classico.
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 8000);
-      const [r, providersRes] = await Promise.all([
-        fetch('/api/health', { signal: ctrl.signal, cache: 'no-store' }),
-        fetch('/api/providers/health', { signal: ctrl.signal, cache: 'no-store' }).catch(() => null)
-      ]).finally(() => clearTimeout(tid));
-      if (r.ok) {
-        const data = await r.json();
-        const providers = providersRes?.ok ? await providersRes.json() : null;
-        if (barApi) barApi.className = 'bar-fill ok';
-        if (sApi) { sApi.textContent = 'OK'; sApi.style.color = 'var(--green, #00ff88)'; }
-
-        if (data.capabilities?.voice_realtime) {
-          if (barVoice) barVoice.className = 'bar-fill ok';
-          if (sVoice) { sVoice.textContent = 'OK'; sVoice.style.color = 'var(--green, #00ff88)'; }
-        } else {
-          if (barVoice) barVoice.className = 'bar-fill err';
-          if (sVoice) { sVoice.textContent = 'OFF'; sVoice.style.color = '#ff4455'; }
-        }
-
-        if (providers) {
-          setExecutorHudStatus(activeExecutor === 'auto' ? getAutoExecutorStatus(providers) : providers[activeExecutor]);
-        } else {
-          setExecutorHudStatus({ status: data.capabilities?.task_execution ? 'ok' : 'error' });
-        }
-        return;
-      }
-    } catch {}
-
-    // Offline
-    if (barApi) barApi.className = 'bar-fill err';
-    if (barVoice) barVoice.className = 'bar-fill err';
-    if (sApi) { sApi.textContent = 'ERR'; sApi.style.color = '#ff4455'; }
-    if (sVoice) { sVoice.textContent = 'ERR'; sVoice.style.color = '#ff4455'; }
-    setExecutorHudStatus({ status: 'error' });
-  }
-
   // ── Active Model Display ──
   function updateModel(model, status) {
     const modelEl = document.getElementById('active-model');
@@ -2731,12 +2609,8 @@ initBottomPanelsToggle();
 
   // ── Init ──
   loadWeather();
-  initExecutorSelect();
-  updateHealth();
-
   // Periodic updates
   setInterval(loadWeather, 15 * 60 * 1000);     // 15 min
-  setInterval(updateHealth, 10 * 1000);         // 10 sec
 })();
 
 // ═══════════════════════════════════════════════

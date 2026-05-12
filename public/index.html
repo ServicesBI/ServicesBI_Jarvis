@@ -919,64 +919,6 @@ pumpStream('stream-right');
 })();
 </script>
 
-<script>
-(function executorSelector(){
-  function init(){
-    const sel = document.getElementById('executor-select');
-    const dot = document.getElementById('exec-dot');
-    const stat = document.getElementById('exec-status');
-    if (!sel || !dot || !stat) return;
-
-    function setDot(ok){
-      dot.style.background = ok ? '#19ff82' : '#ff5d6c';
-      dot.style.boxShadow  = ok ? '0 0 8px rgba(25,255,130,.9)' : '0 0 8px rgba(255,93,108,.9)';
-    }
-
-    function applyHealth(d){
-      const m = sel.value;
-      let ok = true;
-      if (m === 'claude') ok = (d.claude?.status === 'ok');
-      if (m === 'codex')  ok = (d.codex?.status  === 'ok');
-      setDot(ok);
-      stat.textContent = ok ? 'OK' : 'OFF';
-    }
-
-    // Load current mode
-    fetch('/api/executor/mode')
-      .then(r => r.json())
-      .then(d => { sel.value = d.mode || 'auto'; setDot(true); })
-      .catch(() => { setDot(false); stat.textContent = 'ERR'; });
-
-    // On change: POST new mode
-    sel.addEventListener('change', function(){
-      const mode = sel.value;
-      stat.textContent = '...';
-      fetch('/api/executor/mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode })
-      })
-      .then(r => r.json())
-      .then(d => { sel.value = d.mode || mode; setDot(true); stat.textContent = 'OK'; })
-      .catch(() => { setDot(false); stat.textContent = 'ERR'; });
-    });
-
-    // Poll health every 30s
-    function pollHealth(){
-      fetch('/api/providers/health')
-        .then(r => r.json())
-        .then(d => applyHealth(d))
-        .catch(() => {});
-    }
-    pollHealth();
-    setInterval(pollHealth, 30000);
-  }
-  document.readyState === 'loading'
-    ? document.addEventListener('DOMContentLoaded', init)
-    : init();
-})();
-</script>
-
 <!-- JARVIS LEGACY DOM COMPAT -->
 <div id="jarvis-legacy-compat" style="display:none!important" aria-hidden="true">
 <div id="avatar-status"></div>
@@ -1342,6 +1284,7 @@ function closeIngestModalSafe() {
 <script src="js/utils.js"></script>
 <script src="js/attachments.js"></script>
 <script src="js/screen-capture.js"></script>
+<script src="js/health-executor.js"></script>
 <script src="script.js"></script>
 <script src="js/config-ui.js"></script>
 <script src="js/modals-ui.js"></script>
