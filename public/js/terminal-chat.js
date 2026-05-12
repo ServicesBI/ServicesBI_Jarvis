@@ -79,6 +79,42 @@
     return `Agora s\u00E3o ${h}:${min}.`;
   }
 
+  function isBuildTaskRequest(text) {
+    return /\b(create|generate|build|make|write|produce|design|implement|develop|fix|update|report|crie|gere|construa|fa\u00E7a|escreva|implemente|corrija|analise|relat\u00F3rio)\b/i.test(text);
+  }
+
+  function classifyModelRequest(text) {
+    const opusMatch = /\b(architect|redesign|refactor|infrastructure|migration|deploy|scale|database|system design|e-?book|full|complete|advanced|complex|detailed|comprehensive|deep|entire|production|enterprise)\b/i.test(text);
+    const sonnetMatch = /\b(create|generate|build|make|write|produce|design|implement|develop|fix|update|modify|analyze|report|presentation|website|app|pdf|document|code|script|html|css|crie|gere|construa|fa\u00E7a|escreva)\b/i.test(text);
+    return {
+      opusMatch,
+      sonnetMatch,
+      model: opusMatch ? 'opus' : sonnetMatch ? 'sonnet' : 'haiku'
+    };
+  }
+
+  function buildChatRequestBody({ text, fromVoice, language, conclaveEnabled, attachment }) {
+    const body = { message: text, fromVoice, language, conclaveEnabled };
+    if (attachment) body.attachmentId = attachment.id;
+    return body;
+  }
+
+  function prepareSpeechBrief(text, options = {}) {
+    const sentenceLimit = options.sentenceLimit || 2;
+    const maxLength = options.maxLength || 300;
+    const minSentenceLength = options.minSentenceLength || 0;
+    return String(text || '')
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/[#*_`~>|]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim()
+      .split(/(?<=[.!?])\s+/)
+      .filter(sentence => sentence.trim().length > minSentenceLength)
+      .slice(0, sentenceLimit)
+      .join(' ')
+      .slice(0, maxLength);
+  }
+
   function resolveSendMessage(sendMessage) {
     return typeof sendMessage === 'function' ? sendMessage : window.sendMessage;
   }
@@ -134,6 +170,10 @@
         addTerminalLine: typeof window.addTerminalLine,
         addDownloadCard: typeof window.addDownloadCard,
         getLocalDateTimeAnswer: typeof window.getLocalDateTimeAnswer,
+        isBuildTaskRequest: typeof window.JarvisTerminalChat?.isBuildTaskRequest,
+        classifyModelRequest: typeof window.JarvisTerminalChat?.classifyModelRequest,
+        buildChatRequestBody: typeof window.JarvisTerminalChat?.buildChatRequestBody,
+        prepareSpeechBrief: typeof window.JarvisTerminalChat?.prepareSpeechBrief,
         JarvisAttachments: typeof window.JarvisAttachments,
         JarvisScreenCapture: typeof window.JarvisScreenCapture,
         renderMarkdown: typeof window.renderMarkdown,
@@ -170,6 +210,10 @@
     addTerminalLine,
     addDownloadCard,
     getLocalDateTimeAnswer,
+    isBuildTaskRequest,
+    classifyModelRequest,
+    buildChatRequestBody,
+    prepareSpeechBrief,
     bindSendHandlers,
     getChatElements,
     getDependencies,

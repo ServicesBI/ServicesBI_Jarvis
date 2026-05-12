@@ -1008,7 +1008,7 @@ async function sendMessage(text, fromVoice = false) {
 
   // If screen is captured + Q&A → GPT-4o-mini vision (fast, real-time)
   // If screen is captured + build task → fall through to normal chat (Claude gets context via /api/chat)
-  const isBuildTask = /\b(create|generate|build|make|write|produce|design|implement|develop|fix|update|report|crie|gere|construa|faça|escreva|implemente|corrija|analise|relatório)\b/i.test(text);
+  const isBuildTask = window.JarvisTerminalChat.isBuildTaskRequest(text);
   if (hasScreenCapture && !hasImageAttachment && !isBuildTask) {
     const screenResponse = await window.JarvisScreenCapture?.analyze(text.trim());
     if (screenResponse) {
@@ -1016,8 +1016,7 @@ async function sendMessage(text, fromVoice = false) {
       playReceiveSound();
       highlightAgents(screenResponse);
       if (voiceEnabled && userGestureReceived) {
-        const brief = screenResponse.replace(/```[\s\S]*?```/g, '').replace(/[#*_`~>|]/g, '')
-          .replace(/\n+/g, ' ').trim().split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').slice(0, 300);
+        const brief = window.JarvisTerminalChat.prepareSpeechBrief(screenResponse);
         if (brief) await speakResponse(brief);
       }
       setAvatarState('idle');
@@ -1045,18 +1044,22 @@ async function sendMessage(text, fromVoice = false) {
   }
 
   // Highlight active model based on complexity
-  const opusMatch = /\b(architect|redesign|refactor|infrastructure|migration|deploy|scale|database|system design|e-?book|full|complete|advanced|complex|detailed|comprehensive|deep|entire|production|enterprise)\b/i.test(text);
-  const sonnetMatch = /\b(create|generate|build|make|write|produce|design|implement|develop|fix|update|modify|analyze|report|presentation|website|app|pdf|document|code|script|html|css|crie|gere|construa|faça|escreva)\b/i.test(text);
+  const { opusMatch, sonnetMatch, model: activeModel } = window.JarvisTerminalChat.classifyModelRequest(text);
   const isVoiceTask = fromVoice && (opusMatch || sonnetMatch);
-  setActiveModel(opusMatch ? 'opus' : sonnetMatch ? 'sonnet' : 'haiku');
+  setActiveModel(activeModel);
 
   // ACK is now handled by GPT-mini response (Phase 1 of /api/chat)
   let ackPromise = null;
 
   try {
-    const body = { message: text, fromVoice, language: currentLang, conclaveEnabled };
+    const body = window.JarvisTerminalChat.buildChatRequestBody({
+      text,
+      fromVoice,
+      language: currentLang,
+      conclaveEnabled,
+      attachment: currentAttachment
+    });
     if (currentAttachment) {
-      body.attachmentId = currentAttachment.id;
       window.JarvisAttachments?.clear();
     }
 
@@ -1136,9 +1139,7 @@ async function sendMessage(text, fromVoice = false) {
       highlightAgents(cleanGpt);
       // Speak GPT-mini response if streaming TTS didn't already fire
       if (voiceEnabled && userGestureReceived && !streamTtsFired) {
-        const brief = cleanGpt.replace(/```[\s\S]*?```/g, '').replace(/[#*_`~>|]/g, '')
-          .replace(/\n+/g, ' ').trim()
-          .split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 5).slice(0, 2).join(' ').slice(0, 300);
+        const brief = window.JarvisTerminalChat.prepareSpeechBrief(cleanGpt, { minSentenceLength: 5 });
         if (brief) await speakResponse(brief);
       }
     }
