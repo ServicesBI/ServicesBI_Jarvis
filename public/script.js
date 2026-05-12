@@ -1177,7 +1177,10 @@ async function startRealtime() {
       method: 'POST', headers: {'Content-Type':'application/json'},
       // Realtime API only supports: alloy, ash, ballad, coral, echo, sage, shimmer, verse, marin, cedar
       // TTS voices like onyx, nova, fable are NOT supported — always map to a valid Realtime voice
-      body: JSON.stringify({ language: currentLang, voice: window.JarvisVoiceTTS.getRealtimeVoice(ttsVoice) })
+      body: JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeSessionRequest(
+        currentLang,
+        window.JarvisVoiceTTS.getRealtimeVoice(ttsVoice)
+      ))
     });
     const sess = await tokenRes.json();
     if (!sess.client_secret?.value) throw new Error(sess.error || 'No ephemeral token');
@@ -1431,6 +1434,30 @@ function announceToRealtime(message) {
     speakResponse(message);
   }
 }
+
+window.JarvisVoiceRealtime.configureRealtimeHandlers({
+  getState() {
+    return {
+      realtimeActive,
+      isRealtimeActive,
+      realtimeConnecting,
+      realtimeUserDisabled,
+      hasPeerConnection: !!realtimePC,
+      hasStream: !!realtimeStream,
+      hasAudio: !!realtimeAudio,
+      dataChannelReadyState: realtimeDC?.readyState || '',
+      dataChannelOpen: window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC)
+    };
+  },
+  startRealtime,
+  stopRealtime,
+  routeVoiceCommand,
+  handleRealtimeTask,
+  announceToRealtime,
+  addTerminalLine,
+  setVoiceStatus,
+  setAvatarState
+});
 
 function initRealtimeBtn() {
   // Push-to-talk: Realtime only starts when user explicitly clicks mic button.
