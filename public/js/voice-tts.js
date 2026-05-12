@@ -36,11 +36,30 @@
     return Array.from(REALTIME_VOICES);
   }
 
+  function canMovePlayback() {
+    return {
+      ok: false,
+      reason: 'speakResponse/_ttsPlay ainda controlam playback real, cancelamento, fila, abort controller, audio atual e estado funcional de fala.',
+      blockers: [
+        'currentTtsAudio/_currentAudio',
+        '_ttsQueue/_ttsPlaybackId/_currentTtsAbortController',
+        'window.speechSynthesis cancelamento',
+        'fetch /api/tts e Audio playback',
+        'isJarvisSpeaking/lastVoiceCommandAt',
+        'setAvatarState e estados visuais durante fala',
+        'ttsVoice/currentLang como estado funcional de configuracao',
+        'ACK/TTS vindo de processStreamLine e sendMessage'
+      ],
+      recommendation: 'Manter speakResponse/_ttsPlay em public/script.js ate isolar uma bridge de playback dedicada.'
+    };
+  }
+
   window.JarvisVoiceTTS = {
     cleanTextForSpeech,
     getSpeechSentences,
     prepareTtsText,
     getRealtimeVoice,
-    getAvailableRealtimeVoices
+    getAvailableRealtimeVoices,
+    canMovePlayback
   };
 })();
