@@ -66,6 +66,14 @@
     playErrorSound: null
   };
 
+  const wakeWordHandlers = {
+    getState: null,
+    startWakeWord: null,
+    stopWakeWord: null,
+    startRealtime: null,
+    addTerminalLine: null
+  };
+
   function configureRecordingHandlers(handlers = {}) {
     if (!handlers || typeof handlers !== 'object') return getRecordingHandlers();
     Object.keys(recordingHandlers).forEach((key) => {
@@ -86,6 +94,31 @@
     if (typeof recordingHandlers.getState !== 'function') return null;
     try {
       return recordingHandlers.getState();
+    } catch (err) {
+      return { error: err.message || String(err) };
+    }
+  }
+
+  function configureWakeWordHandlers(handlers = {}) {
+    if (!handlers || typeof handlers !== 'object') return getWakeWordHandlers();
+    Object.keys(wakeWordHandlers).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(handlers, key)) {
+        wakeWordHandlers[key] = handlers[key];
+      }
+    });
+    return getWakeWordHandlers();
+  }
+
+  function getWakeWordHandlers() {
+    return Object.fromEntries(
+      Object.entries(wakeWordHandlers).map(([key, value]) => [key, typeof value])
+    );
+  }
+
+  function getWakeWordState() {
+    if (typeof wakeWordHandlers.getState !== 'function') return null;
+    try {
+      return wakeWordHandlers.getState();
     } catch (err) {
       return { error: err.message || String(err) };
     }
@@ -183,7 +216,8 @@
         'fetch /api/cowork/start',
         'addTerminalLine',
         'auto-restart no onend'
-      ]
+      ],
+      handlers: getWakeWordHandlers()
     };
   }
 
@@ -200,6 +234,9 @@
     configureRecordingHandlers,
     getRecordingHandlers,
     getRecordingState,
+    configureWakeWordHandlers,
+    getWakeWordHandlers,
+    getWakeWordState,
     getAudioBlobSize,
     validateCapturedAudio,
     buildSttFormData,

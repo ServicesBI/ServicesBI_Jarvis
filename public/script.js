@@ -1850,6 +1850,23 @@ function stopWakeWord() {
   }
 }
 
+window.JarvisVoiceSTT.configureWakeWordHandlers({
+  getState() {
+    return {
+      wakeWordEnabled,
+      hasWakeWordRecognition: !!wakeWordRecognition,
+      canWebSpeech,
+      wakeWordDisabled: window.JarvisVoiceSTT.readWakeWordDisabledFromStorage(),
+      realtimeActive,
+      realtimeConnecting
+    };
+  },
+  startWakeWord,
+  stopWakeWord,
+  startRealtime,
+  addTerminalLine
+});
+
 function initBottomPanelsToggle() {
   const toggleBtn = document.getElementById('toggle-bottom-panels');
   const cockpit = document.querySelector('.cockpit-iron');
