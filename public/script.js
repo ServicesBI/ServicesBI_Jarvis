@@ -1533,6 +1533,8 @@ window.JarvisVoiceRealtime.configureRealtimeCommandHandlers({
   setAvatarState
 });
 
+window.JarvisVoiceRealtimeFinalDecision = window.JarvisVoiceRealtime.getRealtimeFinalDecision();
+
 function initRealtimeBtn() {
   // Push-to-talk: Realtime only starts when user explicitly clicks mic button.
   // No auto-start, no auto-reconnect. User is in full control.

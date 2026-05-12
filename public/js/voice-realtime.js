@@ -388,6 +388,35 @@
     };
   }
 
+  function getRealtimeFinalBlockers() {
+    return {
+      lifecycle: getRealtimeLifecycleBlockers(),
+      dataChannelHandlers: getDataChannelHandlerBlockers(),
+      commands: getRealtimeCommandBlockers(),
+      hardDependencies: [
+        'startRealtime cria RTCPeerConnection e DataChannel reais',
+        'startRealtime abre microfone com navigator.mediaDevices.getUserMedia',
+        'startRealtime faz fetch real para /api/realtime/session e SDP exchange com OpenAI',
+        'stopRealtime fecha PC/DC/stream/audio e atualiza UI',
+        'stopRealtime reativa wake word quando habilitada',
+        'botao mic depende diretamente de realtimeActive/realtimeConnecting',
+        'sendMessage bloqueia fluxo legado quando Realtime esta ativo',
+        'TTS fallback e notificacoes SSE chamam announceToRealtime/speakResponse',
+        'flags globais de voz, cooldown e in-flight seguem no script.js'
+      ]
+    };
+  }
+
+  function getRealtimeFinalDecision() {
+    return {
+      moveStartRealtime: false,
+      moveStopRealtime: false,
+      recommendation: 'Fechar Bloco 12 com Realtime real preservado no public/script.js.',
+      reason: 'Mover agora exigiria uma bridge grande demais para WebRTC, DataChannel, microfone, wake word, TTS, chat e flags globais.',
+      blockers: getRealtimeFinalBlockers()
+    };
+  }
+
   function buildVoiceCommandRouterBody(message, language) {
     return { message, language };
   }
@@ -440,6 +469,8 @@
     getRealtimeCommandState,
     getRealtimeCommandBlockers,
     canMoveRealtimeCommands,
+    getRealtimeFinalBlockers,
+    getRealtimeFinalDecision,
     getRealtimeCapabilities,
     getRealtimeBlockers,
     canMoveRealtime,
