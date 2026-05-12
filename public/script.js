@@ -882,28 +882,7 @@ function playReceiveSound() { playTone(660, 80); }
 function playErrorSound() { playTone(440, 100); setTimeout(() => playTone(330, 150), 120); }
 
 // ========== TERMINAL RENDERING ==========
-function addTerminalLine(text, type = '') {
-  const line = document.createElement('div');
-  line.className = `terminal-line ${type}`;
-  const ts = document.createElement('span');
-  ts.className = 'ts';
-  ts.textContent = `[${getTimestamp()}]`;
-  const msg = document.createElement('span');
-  msg.className = 'msg';
-
-  if (type === '' || type === 'jarvis-line') {
-    msg.innerHTML = renderMarkdown(text);
-    addCopyButtons(msg);
-  } else {
-    msg.textContent = text;
-  }
-
-  line.appendChild(ts);
-  line.appendChild(document.createTextNode(' '));
-  line.appendChild(msg);
-  terminal.appendChild(line);
-  terminal.scrollTop = terminal.scrollHeight;
-}
+// Terminal render helpers moved to public/js/terminal-chat.js.
 
 let pendingAckTTS = null; // Track ACK that needs TTS
 
@@ -979,41 +958,6 @@ function processStreamLine(line) {
     return false;
   }
   return true;
-}
-
-function addDownloadCard(fileName, filePath) {
-  const card = document.createElement('div');
-  card.className = 'download-card';
-  card.innerHTML = `
-    <span class="file-icon">📄</span>
-    <span class="file-name">${fileName}</span>
-    <a class="dl-btn" href="/api/files/download?path=${encodeURIComponent(filePath)}" download>Download</a>
-  `;
-  terminal.appendChild(card);
-  terminal.scrollTop = terminal.scrollHeight;
-}
-
-function getLocalDateTimeAnswer(text) {
-  const normalized = String(text || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  const asksDay = /\b(que dia|dia e hoje|data de hoje|qual a data)\b/.test(normalized);
-  const asksTime = /\b(que horas|quantas horas|hora e|horario|agora sao)\b/.test(normalized);
-  if (!asksDay && !asksTime) return '';
-
-  const now = new Date();
-  const dayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
-  const d = String(now.getDate()).padStart(2, '0');
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const y = now.getFullYear();
-  const h = String(now.getHours()).padStart(2, '0');
-  const min = String(now.getMinutes()).padStart(2, '0');
-  const dayName = dayNames[now.getDay()];
-
-  if (asksDay && asksTime) return `Hoje é ${dayName}, ${d}/${m}/${y}, e agora são ${h}:${min}.`;
-  if (asksDay) return `Hoje é ${dayName}, ${d}/${m}/${y}.`;
-  return `Agora são ${h}:${min}.`;
 }
 
 // ========== CHAT - SEND MESSAGE ==========
