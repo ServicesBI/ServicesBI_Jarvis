@@ -728,63 +728,6 @@ let ttsPlaying = false;
 let userGestureReceived = false;
 let webSpeechRec = null;
 const canWebSpeech = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
-const VOICE_STATUS_STATES = ['mute', 'ready', 'listening', 'thinking', 'speaking'];
-const VOICE_STATUS_LABELS = {
-  mute: 'MUTE',
-  ready: 'MUTE',
-  listening: 'LISTENING',
-  thinking: 'THINKING',
-  speaking: 'SPEAKING'
-};
-const VOICE_STATUS_CARD_LABELS = {
-  mute: 'MUTE',
-  ready: 'MUTE',
-  listening: 'LISTEN',
-  thinking: 'THINK',
-  speaking: 'SPEAK'
-};
-
-function getVoiceRestStatus() {
-  if (!voiceEnabled) return 'mute';
-  if (isRecording || isRealtimeActive || realtimeActive) return 'listening';
-  return 'mute';
-}
-
-function setVoiceStatus(state = 'ready') {
-  const status = state === 'idle' || state === 'auto' ? getVoiceRestStatus() : state;
-  const normalized = status === 'ready' ? 'mute' : (VOICE_STATUS_STATES.includes(status) ? status : getVoiceRestStatus());
-  const cardLabel = VOICE_STATUS_CARD_LABELS[normalized];
-  const centerLabel = VOICE_STATUS_LABELS[normalized];
-  const classes = VOICE_STATUS_STATES.map(s => `voice-status-${s}`);
-  const sideVoice = document.getElementById('side-voice-status');
-  const centerVoice = document.getElementById('jarvis-core-voice-status');
-  const bottomVoice = document.getElementById('jarvis-bottom-voice-status');
-  const micDot = document.getElementById('jarvis-mic-dot');
-  const voiceCard = document.querySelector('.voice-card');
-  const sideCard = sideVoice?.closest('.side-mini-card');
-
-  [micBtn, micDot, centerVoice, bottomVoice, voiceCard, sideCard].forEach(el => {
-    if (!el) return;
-    el.classList.remove(...classes, 'speaking');
-    el.classList.add(`voice-status-${normalized}`);
-  });
-  if (voiceCard && normalized === 'speaking') voiceCard.classList.add('speaking');
-  if (sideCard) {
-    normalized === 'listening' ? sideCard.classList.add('voz-mic-active') : sideCard.classList.remove('voz-mic-active');
-  }
-  if (sideVoice) sideVoice.textContent = cardLabel;
-  if (centerVoice) centerVoice.textContent = centerLabel;
-  if (bottomVoice) bottomVoice.textContent = centerLabel;
-  if (micBtn) {
-    micBtn.setAttribute('aria-label', `Voz: ${centerLabel}`);
-    micBtn.title = centerLabel;
-  }
-}
-
-window.setVoiceStatus = setVoiceStatus;
-window.setJarvisSpeaking = function(speaking) {
-  setVoiceStatus(speaking ? 'speaking' : 'auto');
-};
 
 // ========== CONCLAVE TOGGLE ==========
 let conclaveEnabled = localStorage.getItem('jarvis-conclave') !== 'false';
@@ -1222,6 +1165,14 @@ let realtimeDC = null;
 let realtimeActive = false;
 let realtimeConnecting = false;
 let realtimeUserDisabled = false;
+
+window.JarvisVoiceUI?.configure({
+  getRestStatus() {
+    if (!voiceEnabled) return 'mute';
+    if (isRecording || isRealtimeActive || realtimeActive) return 'listening';
+    return 'mute';
+  }
+});
 
 async function startRealtime() {
   if (realtimeActive) { realtimeUserDisabled = true; return stopRealtime(); }
