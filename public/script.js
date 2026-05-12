@@ -718,7 +718,7 @@ let ttsQueue = [];
 let ttsPlaying = false;
 let userGestureReceived = false;
 let webSpeechRec = null;
-const canWebSpeech = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+const canWebSpeech = window.JarvisVoiceSTT.canUseWebSpeech();
 
 // ========== CONCLAVE TOGGLE ==========
 let conclaveEnabled = localStorage.getItem('jarvis-conclave') !== 'false';
@@ -1457,7 +1457,7 @@ async function startRecording() {
 
     // Fast path: Web Speech API — zero latency, no server round-trip
     if (canWebSpeech) {
-      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRec = window.JarvisVoiceSTT.getSpeechRecognitionCtor();
       webSpeechRec = new SpeechRec();
       // Language follows the BR/EN toggle
       webSpeechRec.lang = ({ BR: 'pt-BR', ES: 'es-ES', EN: 'en-US' }[currentLang]) || 'en-US';
@@ -1563,8 +1563,9 @@ async function startRecording() {
 
     // 64kbps: half upload size = ~40% faster Whisper round-trip, quality still excellent for STT
     const recorderOpts = { audioBitsPerSecond: 64000 };
-    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-      recorderOpts.mimeType = 'audio/webm;codecs=opus';
+    const supportedMimeType = window.JarvisVoiceSTT.getSupportedAudioMimeType();
+    if (supportedMimeType) {
+      recorderOpts.mimeType = supportedMimeType;
     }
 
     mediaRecorder = new MediaRecorder(stream, recorderOpts);
@@ -1797,9 +1798,9 @@ async function _ttsPlay(text, playbackId = _ttsPlaybackId) {
 
 // ========== WAKE WORD DETECTION ==========
 function startWakeWord() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+  if (!window.JarvisVoiceSTT.canUseWebSpeech()) return;
 
-  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRec = window.JarvisVoiceSTT.getSpeechRecognitionCtor();
   wakeWordRecognition = new SpeechRec();
   wakeWordRecognition.continuous = true;
   wakeWordRecognition.interimResults = true;
@@ -1807,9 +1808,9 @@ function startWakeWord() {
 
   wakeWordRecognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript.toLowerCase();
+      const transcript = window.JarvisVoiceSTT.normalizeVoiceCommandText(event.results[i][0].transcript);
       // Detect "jarvis" in any pronunciation (jarvis, járvis, jarvís)
-      if (transcript.includes('jarvis') || transcript.includes('járvis') || transcript.includes('jarves')) {
+      if (window.JarvisVoiceSTT.isWakeWordMatch(transcript)) {
         if (!realtimeActive && !realtimeConnecting) {
           addTerminalLine('[info] 🎤 JARVIS ativado por voz — modo escuta + cowork ON', 'info-line');
           // Activate voice
@@ -1974,11 +1975,11 @@ function setConfigVoiceEnabled(enabled) {
 function setConfigWakeWordEnabled(enabled) {
   const desired = !!enabled;
   if (desired && wakeWordEnabled) {
-    localStorage.setItem('jarvis-wakeword-disabled', 'false');
+    window.JarvisVoiceSTT.writeWakeWordDisabledToStorage(false);
     return wakeWordEnabled;
   }
   wakeWordEnabled = desired;
-  localStorage.setItem('jarvis-wakeword-disabled', wakeWordEnabled ? 'false' : 'true');
+  window.JarvisVoiceSTT.writeWakeWordDisabledToStorage(!wakeWordEnabled);
   if (wakeWordEnabled) {
     try {
       startWakeWord();
@@ -2017,7 +2018,7 @@ window.JarvisConfigBridge = {
 // ========== AUTO-START WAKE WORD ==========
 // JARVIS listens for his name — only if user hasn't explicitly disabled it
 setTimeout(() => {
-  const userDisabled = localStorage.getItem('jarvis-wakeword-disabled') === 'true';
+  const userDisabled = window.JarvisVoiceSTT.readWakeWordDisabledFromStorage();
   if (canWebSpeech && !wakeWordEnabled && !userDisabled) {
     try {
       wakeWordEnabled = true;
