@@ -115,6 +115,57 @@
       .slice(0, maxLength);
   }
 
+  function isBuildStartLine(line) {
+    return String(line || '').startsWith('[build-start]');
+  }
+
+  function isStreamMetaLine(line) {
+    return /^\[(system|file|error|warn|info|ack)\]/.test(String(line || ''));
+  }
+
+  function classifyStreamLine(line) {
+    const value = String(line || '');
+    if (!value.trim()) return { type: 'empty', text: value };
+    if (value.startsWith('[translated]')) return { type: 'translated', text: value.slice(12).trim() };
+    if (value.startsWith('[ack]')) return { type: 'ack', text: value.slice(5).trim() };
+    if (value.startsWith('[system]')) return { type: 'system', text: value };
+    if (value.startsWith('[file]')) return { type: 'file', text: value, payload: parseDownloadPayload(value) };
+    if (value.startsWith('[error]')) return { type: 'error', text: value };
+    if (value.startsWith('[warn]')) return { type: 'warn', text: value };
+    if (value.startsWith('[info]')) return { type: 'info', text: value };
+    return { type: 'message', text: value };
+  }
+
+  function parseDownloadPayload(line) {
+    const match = String(line || '').match(/\[file\]\s*(.+?)\s*\|\s*(.+)/);
+    if (!match) return null;
+    return {
+      fileName: match[1].trim(),
+      filePath: match[2].trim()
+    };
+  }
+
+  function splitStreamBuffer(buffer) {
+    const lines = String(buffer || '').split('\n');
+    return {
+      lines,
+      remainder: lines.pop()
+    };
+  }
+
+  function shouldProcessFinalBuffer(buffer) {
+    const value = String(buffer || '');
+    return !!(value.trim() && !isBuildStartLine(value));
+  }
+
+  function stripStreamMetaLines(text) {
+    return String(text || '')
+      .split('\n')
+      .filter(line => !isStreamMetaLine(line))
+      .join('\n')
+      .trim();
+  }
+
   function resolveSendMessage(sendMessage) {
     return typeof sendMessage === 'function' ? sendMessage : window.sendMessage;
   }
@@ -174,6 +225,11 @@
         classifyModelRequest: typeof window.JarvisTerminalChat?.classifyModelRequest,
         buildChatRequestBody: typeof window.JarvisTerminalChat?.buildChatRequestBody,
         prepareSpeechBrief: typeof window.JarvisTerminalChat?.prepareSpeechBrief,
+        classifyStreamLine: typeof window.JarvisTerminalChat?.classifyStreamLine,
+        parseDownloadPayload: typeof window.JarvisTerminalChat?.parseDownloadPayload,
+        splitStreamBuffer: typeof window.JarvisTerminalChat?.splitStreamBuffer,
+        shouldProcessFinalBuffer: typeof window.JarvisTerminalChat?.shouldProcessFinalBuffer,
+        stripStreamMetaLines: typeof window.JarvisTerminalChat?.stripStreamMetaLines,
         JarvisAttachments: typeof window.JarvisAttachments,
         JarvisScreenCapture: typeof window.JarvisScreenCapture,
         renderMarkdown: typeof window.renderMarkdown,
@@ -214,6 +270,13 @@
     classifyModelRequest,
     buildChatRequestBody,
     prepareSpeechBrief,
+    isBuildStartLine,
+    isStreamMetaLine,
+    classifyStreamLine,
+    parseDownloadPayload,
+    splitStreamBuffer,
+    shouldProcessFinalBuffer,
+    stripStreamMetaLines,
     bindSendHandlers,
     getChatElements,
     getDependencies,

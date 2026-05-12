@@ -921,45 +921,44 @@ function setModelFromAgent(agentEl) {
 }
 
 function processStreamLine(line) {
-  if (!line.trim()) return;
+  const streamLine = window.JarvisTerminalChat.classifyStreamLine(line);
+  if (streamLine.type === 'empty') return;
 
-  if (line.startsWith('[translated]')) {
+  if (streamLine.type === 'translated') {
     // Replace last user line in terminal with English translation
-    const translated = line.slice(12).trim();
+    const translated = streamLine.text;
     const userLines = terminal.querySelectorAll('.user-line');
     if (userLines.length > 0) {
       const last = userLines[userLines.length - 1];
       last.querySelector('.msg').textContent = `> ${translated}`;
     }
     return true;
-  } else if (line.startsWith('[ack]')) {
-    // 7A: Instant acknowledgment — show + speak immediately
-    const ackText = line.slice(5).trim();
+  } else if (streamLine.type === 'ack') {
+    // 7A: Instant acknowledgment - show + speak immediately
+    const ackText = streamLine.text;
     addTerminalLine(ackText, 'info-line');
     // Fire TTS for ACK immediately (non-blocking)
     if (voiceEnabled && userGestureReceived && !(realtimeActive || isRealtimeActive)) {
       pendingAckTTS = speakResponse(ackText);
     }
     return true;
-  } else if (line.startsWith('[system]')) {
+  } else if (streamLine.type === 'system') {
     addTerminalLine(line, 'system-line');
     // Completion TTS is handled exclusively by GPT-mini push notifications (SSE)
-  } else if (line.startsWith('[file]')) {
+  } else if (streamLine.type === 'file') {
     addTerminalLine(line, 'file-line');
-    const match = line.match(/\[file\]\s*(.+?)\s*\|\s*(.+)/);
-    if (match) addDownloadCard(match[1].trim(), match[2].trim());
-  } else if (line.startsWith('[error]')) {
+    if (streamLine.payload) addDownloadCard(streamLine.payload.fileName, streamLine.payload.filePath);
+  } else if (streamLine.type === 'error') {
     addTerminalLine(line, 'error-line');
-  } else if (line.startsWith('[warn]')) {
+  } else if (streamLine.type === 'warn') {
     addTerminalLine(line, 'warn-line');
-  } else if (line.startsWith('[info]')) {
+  } else if (streamLine.type === 'info') {
     addTerminalLine(line, 'info-line');
   } else {
     return false;
   }
   return true;
 }
-
 // ========== CHAT - SEND MESSAGE ==========
 async function sendMessage(text, fromVoice = false) {
   const currentAttachment = window.JarvisAttachments?.get();
@@ -1090,11 +1089,12 @@ async function sendMessage(text, fromVoice = false) {
       const ackPortion = chunk.split('[build-start]')[0];
       const hadBuildStart = chunk.includes('[build-start]');
 
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
+      const splitBuffer = window.JarvisTerminalChat.splitStreamBuffer(buffer);
+      const lines = splitBuffer.lines;
+      buffer = splitBuffer.remainder;
 
       for (const line of lines) {
-        if (line.startsWith('[build-start]')) { claudeSilent = true; continue; }
+        if (window.JarvisTerminalChat.isBuildStartLine(line)) { claudeSilent = true; continue; }
         processStreamLine(line);
         if (!claudeSilent) gptResponse += line + '\n';
       }
@@ -1117,21 +1117,19 @@ async function sendMessage(text, fromVoice = false) {
       }
     }
 
-    if (buffer.trim() && !buffer.startsWith('[build-start]')) {
+    if (window.JarvisTerminalChat.shouldProcessFinalBuffer(buffer)) {
       const handled = processStreamLine(buffer);
       if (!handled && !claudeSilent) gptResponse += buffer + '\n';
     }
 
     // GPT-mini response → render + speak (if not already fired by streaming)
-    const cleanGpt = gptResponse.split('\n')
-      .filter(l => !l.startsWith('[system]') && !l.startsWith('[file]') && !l.startsWith('[error]') && !l.startsWith('[warn]') && !l.startsWith('[info]') && !l.startsWith('[ack]'))
-      .join('\n').trim();
+    const cleanGpt = window.JarvisTerminalChat.stripStreamMetaLines(gptResponse);
+
 
     // Claude output (after [build-start]) → render to terminal, NO TTS
     const claudeOutput = fullResponse.split('[build-start]')[1] || '';
-    const cleanClaude = claudeOutput.split('\n')
-      .filter(l => !l.startsWith('[system]') && !l.startsWith('[file]') && !l.startsWith('[error]') && !l.startsWith('[warn]') && !l.startsWith('[info]') && !l.startsWith('[ack]'))
-      .join('\n').trim();
+    const cleanClaude = window.JarvisTerminalChat.stripStreamMetaLines(claudeOutput);
+
 
     if (cleanGpt) {
       addTerminalLine(cleanGpt, 'jarvis-line');
