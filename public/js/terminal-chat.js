@@ -114,6 +114,55 @@
     }
   }
 
+  function getChatElements() {
+    return {
+      terminal: getTerminalShell(),
+      terminalOutput: getTerminalOutput(),
+      chatInput: getChatInput(),
+      sendBtn: getSendButton(),
+      fileAttach: document.getElementById('file-attach'),
+      screenBtn: document.getElementById('screen-btn'),
+      micBtn: document.getElementById('mic-btn')
+    };
+  }
+
+  function getDependencies() {
+    return {
+      globals: {
+        sendMessage: typeof window.sendMessage,
+        processStreamLine: typeof window.processStreamLine,
+        addTerminalLine: typeof window.addTerminalLine,
+        addDownloadCard: typeof window.addDownloadCard,
+        getLocalDateTimeAnswer: typeof window.getLocalDateTimeAnswer,
+        JarvisAttachments: typeof window.JarvisAttachments,
+        JarvisScreenCapture: typeof window.JarvisScreenCapture,
+        renderMarkdown: typeof window.renderMarkdown,
+        addCopyButtons: typeof window.addCopyButtons,
+        getTimestamp: typeof window.getTimestamp,
+        setVoiceStatus: typeof window.setVoiceStatus
+      },
+      dom: Object.fromEntries(
+        Object.entries(getChatElements()).map(([key, value]) => [key, !!value])
+      )
+    };
+  }
+
+  function canMoveSendMessage() {
+    return {
+      ok: false,
+      reason: 'sendMessage ainda depende de voz/realtime/STT/TTS, avatar/modelos/agentes/sons, anexos, TELA, processStreamLine e streaming de /api/chat.',
+      blockers: [
+        'voiceEnabled/userGestureReceived/isRealtimeActive/realtimeActive/isJarvisSpeaking/isVoiceRequestInFlight/lastVoiceCommandAt',
+        'speakResponse/scheduleNextListen/routeVoiceCommand',
+        'setAvatarState/setActiveModel/highlightAgents/playSendSound/playReceiveSound/playErrorSound',
+        'window.JarvisAttachments',
+        'window.JarvisScreenCapture',
+        'processStreamLine',
+        'fetch /api/chat com streaming e buffer final sem newline'
+      ]
+    };
+  }
+
   window.addTerminalLine = addTerminalLine;
   window.addDownloadCard = addDownloadCard;
   window.getLocalDateTimeAnswer = getLocalDateTimeAnswer;
@@ -121,6 +170,9 @@
     addTerminalLine,
     addDownloadCard,
     getLocalDateTimeAnswer,
-    bindSendHandlers
+    bindSendHandlers,
+    getChatElements,
+    getDependencies,
+    canMoveSendMessage
   };
 })();
