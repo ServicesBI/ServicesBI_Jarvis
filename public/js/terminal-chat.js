@@ -166,6 +166,79 @@
       .trim();
   }
 
+  const streamHandlers = {
+    replaceLastUserLine: null,
+    addTerminalLine,
+    addDownloadCard,
+    handleAck: null
+  };
+
+  function configureStreamHandlers(handlers = {}) {
+    if (!handlers || typeof handlers !== 'object') return getStreamHandlers();
+    Object.keys(streamHandlers).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(handlers, key)) {
+        streamHandlers[key] = handlers[key];
+      }
+    });
+    return getStreamHandlers();
+  }
+
+  function getStreamHandlers() {
+    return {
+      replaceLastUserLine: typeof streamHandlers.replaceLastUserLine,
+      addTerminalLine: typeof streamHandlers.addTerminalLine,
+      addDownloadCard: typeof streamHandlers.addDownloadCard,
+      handleAck: typeof streamHandlers.handleAck
+    };
+  }
+
+  function processStreamLine(line) {
+    const streamLine = classifyStreamLine(line);
+    if (streamLine.type === 'empty') return;
+
+    if (streamLine.type === 'translated') {
+      if (typeof streamHandlers.replaceLastUserLine === 'function') {
+        streamHandlers.replaceLastUserLine(`> ${streamLine.text}`);
+      }
+      return true;
+    } else if (streamLine.type === 'ack') {
+      const ackText = streamLine.text;
+      if (typeof streamHandlers.addTerminalLine === 'function') {
+        streamHandlers.addTerminalLine(ackText, 'info-line');
+      }
+      if (typeof streamHandlers.handleAck === 'function') {
+        streamHandlers.handleAck(ackText);
+      }
+      return true;
+    } else if (streamLine.type === 'system') {
+      if (typeof streamHandlers.addTerminalLine === 'function') {
+        streamHandlers.addTerminalLine(line, 'system-line');
+      }
+    } else if (streamLine.type === 'file') {
+      if (typeof streamHandlers.addTerminalLine === 'function') {
+        streamHandlers.addTerminalLine(line, 'file-line');
+      }
+      if (streamLine.payload && typeof streamHandlers.addDownloadCard === 'function') {
+        streamHandlers.addDownloadCard(streamLine.payload.fileName, streamLine.payload.filePath);
+      }
+    } else if (streamLine.type === 'error') {
+      if (typeof streamHandlers.addTerminalLine === 'function') {
+        streamHandlers.addTerminalLine(line, 'error-line');
+      }
+    } else if (streamLine.type === 'warn') {
+      if (typeof streamHandlers.addTerminalLine === 'function') {
+        streamHandlers.addTerminalLine(line, 'warn-line');
+      }
+    } else if (streamLine.type === 'info') {
+      if (typeof streamHandlers.addTerminalLine === 'function') {
+        streamHandlers.addTerminalLine(line, 'info-line');
+      }
+    } else {
+      return false;
+    }
+    return true;
+  }
+
   function resolveSendMessage(sendMessage) {
     return typeof sendMessage === 'function' ? sendMessage : window.sendMessage;
   }
@@ -230,6 +303,7 @@
         splitStreamBuffer: typeof window.JarvisTerminalChat?.splitStreamBuffer,
         shouldProcessFinalBuffer: typeof window.JarvisTerminalChat?.shouldProcessFinalBuffer,
         stripStreamMetaLines: typeof window.JarvisTerminalChat?.stripStreamMetaLines,
+        configureStreamHandlers: typeof window.JarvisTerminalChat?.configureStreamHandlers,
         JarvisAttachments: typeof window.JarvisAttachments,
         JarvisScreenCapture: typeof window.JarvisScreenCapture,
         renderMarkdown: typeof window.renderMarkdown,
@@ -262,6 +336,7 @@
   window.addTerminalLine = addTerminalLine;
   window.addDownloadCard = addDownloadCard;
   window.getLocalDateTimeAnswer = getLocalDateTimeAnswer;
+  window.processStreamLine = processStreamLine;
   window.JarvisTerminalChat = {
     addTerminalLine,
     addDownloadCard,
@@ -277,6 +352,9 @@
     splitStreamBuffer,
     shouldProcessFinalBuffer,
     stripStreamMetaLines,
+    configureStreamHandlers,
+    getStreamHandlers,
+    processStreamLine,
     bindSendHandlers,
     getChatElements,
     getDependencies,

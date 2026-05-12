@@ -920,45 +920,22 @@ function setModelFromAgent(agentEl) {
   if (agentEl.classList.contains('model-haiku'))  document.getElementById('model-haiku')?.classList.add('active-model');
 }
 
-function processStreamLine(line) {
-  const streamLine = window.JarvisTerminalChat.classifyStreamLine(line);
-  if (streamLine.type === 'empty') return;
-
-  if (streamLine.type === 'translated') {
-    // Replace last user line in terminal with English translation
-    const translated = streamLine.text;
+window.JarvisTerminalChat.configureStreamHandlers({
+  replaceLastUserLine(text) {
     const userLines = terminal.querySelectorAll('.user-line');
     if (userLines.length > 0) {
       const last = userLines[userLines.length - 1];
-      last.querySelector('.msg').textContent = `> ${translated}`;
+      last.querySelector('.msg').textContent = text;
     }
-    return true;
-  } else if (streamLine.type === 'ack') {
-    // 7A: Instant acknowledgment - show + speak immediately
-    const ackText = streamLine.text;
-    addTerminalLine(ackText, 'info-line');
-    // Fire TTS for ACK immediately (non-blocking)
+  },
+  addTerminalLine,
+  addDownloadCard,
+  handleAck(ackText) {
     if (voiceEnabled && userGestureReceived && !(realtimeActive || isRealtimeActive)) {
       pendingAckTTS = speakResponse(ackText);
     }
-    return true;
-  } else if (streamLine.type === 'system') {
-    addTerminalLine(line, 'system-line');
-    // Completion TTS is handled exclusively by GPT-mini push notifications (SSE)
-  } else if (streamLine.type === 'file') {
-    addTerminalLine(line, 'file-line');
-    if (streamLine.payload) addDownloadCard(streamLine.payload.fileName, streamLine.payload.filePath);
-  } else if (streamLine.type === 'error') {
-    addTerminalLine(line, 'error-line');
-  } else if (streamLine.type === 'warn') {
-    addTerminalLine(line, 'warn-line');
-  } else if (streamLine.type === 'info') {
-    addTerminalLine(line, 'info-line');
-  } else {
-    return false;
   }
-  return true;
-}
+});
 // ========== CHAT - SEND MESSAGE ==========
 async function sendMessage(text, fromVoice = false) {
   const currentAttachment = window.JarvisAttachments?.get();
