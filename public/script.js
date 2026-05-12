@@ -1701,6 +1701,35 @@ async function transcribeAndSend(audioBlob) {
 }
 
 // ========== TTS PIPELINE (SERIAL QUEUE — prevents double-voice overlap) ==========
+window.JarvisVoiceSTT.configureRecordingHandlers({
+  getState() {
+    return {
+      isRecording,
+      hasMediaRecorder: !!mediaRecorder,
+      audioChunks: audioChunks.length,
+      hasWebSpeechRec: !!webSpeechRec,
+      recordingStartTime,
+      hasAudioAnalyser: !!audioAnalyser,
+      peakVolume,
+      hasVadTimer: !!vadTimer,
+      continuousMode,
+      hasContinuousTimer: !!continuousTimer,
+      canWebSpeech
+    };
+  },
+  startRecording,
+  stopRecording,
+  transcribeAndSend,
+  sendVoiceMessage(text) {
+    return sendMessage(text, true);
+  },
+  setVoiceStatus,
+  setAvatarState,
+  addTerminalLine,
+  playTone,
+  playErrorSound
+});
+
 let _ttsQueue = Promise.resolve();
 let _currentAudio = null;
 let _currentTtsAbortController = null;

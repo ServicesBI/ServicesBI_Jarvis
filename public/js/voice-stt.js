@@ -53,6 +53,44 @@
     };
   }
 
+  const recordingHandlers = {
+    getState: null,
+    startRecording: null,
+    stopRecording: null,
+    transcribeAndSend: null,
+    sendVoiceMessage: null,
+    setVoiceStatus: null,
+    setAvatarState: null,
+    addTerminalLine: null,
+    playTone: null,
+    playErrorSound: null
+  };
+
+  function configureRecordingHandlers(handlers = {}) {
+    if (!handlers || typeof handlers !== 'object') return getRecordingHandlers();
+    Object.keys(recordingHandlers).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(handlers, key)) {
+        recordingHandlers[key] = handlers[key];
+      }
+    });
+    return getRecordingHandlers();
+  }
+
+  function getRecordingHandlers() {
+    return Object.fromEntries(
+      Object.entries(recordingHandlers).map(([key, value]) => [key, typeof value])
+    );
+  }
+
+  function getRecordingState() {
+    if (typeof recordingHandlers.getState !== 'function') return null;
+    try {
+      return recordingHandlers.getState();
+    } catch (err) {
+      return { error: err.message || String(err) };
+    }
+  }
+
   function canMoveRecording() {
     return {
       ok: false,
@@ -64,7 +102,8 @@
         'isRecording/continuousMode/continuousTimer',
         'sendMessage(text, true)',
         'setAvatarState/playTone/addTerminalLine'
-      ]
+      ],
+      handlers: getRecordingHandlers()
     };
   }
 
@@ -93,6 +132,9 @@
     canUseMediaRecorder,
     getSupportedAudioMimeType,
     getCapabilities,
+    configureRecordingHandlers,
+    getRecordingHandlers,
+    getRecordingState,
     canMoveRecording,
     canMoveWakeWord
   };
