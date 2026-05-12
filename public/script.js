@@ -1444,6 +1444,45 @@ window.JarvisVoiceRealtime.configureRealtimeHandlers({
   setAvatarState
 });
 
+window.JarvisVoiceRealtime.configureRealtimeLifecycleHandlers({
+  getState() {
+    const peerState = realtimePC?.connectionState || realtimePC?.iceConnectionState || '';
+    const dataChannelState = realtimeDC?.readyState || '';
+    return {
+      realtimeActive,
+      isRealtimeActive,
+      realtimeConnecting,
+      realtimeUserDisabled,
+      hasPeerConnection: !!realtimePC,
+      peerConnectionState: peerState,
+      normalizedPeerConnectionState: window.JarvisVoiceRealtime.normalizePeerConnectionState(peerState),
+      hasStream: !!realtimeStream,
+      streamTrackCount: realtimeStream?.getTracks?.().length || 0,
+      hasAudio: !!realtimeAudio,
+      hasDataChannel: !!realtimeDC,
+      dataChannelReadyState: dataChannelState,
+      normalizedDataChannelState: window.JarvisVoiceRealtime.normalizeDataChannelState(dataChannelState),
+      dataChannelOpen: window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC),
+      shouldCleanup: window.JarvisVoiceRealtime.shouldCleanupRealtimeState({
+        realtimeActive,
+        isRealtimeActive,
+        realtimeConnecting,
+        hasPeerConnection: !!realtimePC,
+        hasStream: !!realtimeStream,
+        hasAudio: !!realtimeAudio,
+        hasDataChannel: !!realtimeDC
+      }),
+      wakeWordEnabled,
+      micButtonRecording: !!micBtn?.classList.contains('recording')
+    };
+  },
+  startRealtime,
+  stopRealtime,
+  setVoiceStatus,
+  setAvatarState,
+  resumeWakeWord: startWakeWord
+});
+
 function initRealtimeBtn() {
   // Push-to-talk: Realtime only starts when user explicitly clicks mic button.
   // No auto-start, no auto-reconnect. User is in full control.

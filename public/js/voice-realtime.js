@@ -12,6 +12,16 @@
     setAvatarState: null
   };
 
+  const realtimeLifecycleHandlers = {
+    getState: null,
+    startRealtime: null,
+    stopRealtime: null,
+    cleanupRealtime: null,
+    setVoiceStatus: null,
+    setAvatarState: null,
+    resumeWakeWord: null
+  };
+
   function configureRealtimeHandlers(handlers = {}) {
     if (!handlers || typeof handlers !== 'object') return getRealtimeHandlers();
     Object.keys(realtimeHandlers).forEach((key) => {
@@ -37,6 +47,31 @@
     }
   }
 
+  function configureRealtimeLifecycleHandlers(handlers = {}) {
+    if (!handlers || typeof handlers !== 'object') return getRealtimeLifecycleHandlers();
+    Object.keys(realtimeLifecycleHandlers).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(handlers, key)) {
+        realtimeLifecycleHandlers[key] = handlers[key];
+      }
+    });
+    return getRealtimeLifecycleHandlers();
+  }
+
+  function getRealtimeLifecycleHandlers() {
+    return Object.fromEntries(
+      Object.entries(realtimeLifecycleHandlers).map(([key, value]) => [key, typeof value])
+    );
+  }
+
+  function getRealtimeLifecycleState() {
+    if (typeof realtimeLifecycleHandlers.getState !== 'function') return null;
+    try {
+      return realtimeLifecycleHandlers.getState();
+    } catch (err) {
+      return { error: err.message || String(err) };
+    }
+  }
+
   function isRealtimeReadyState(state) {
     return state === 'open' || state === 'connecting';
   }
@@ -55,6 +90,43 @@
 
   function isRealtimeDataChannelOpen(channel) {
     return channel?.readyState === 'open';
+  }
+
+  function normalizePeerConnectionState(state) {
+    const normalized = String(state || '').toLowerCase();
+    if (normalized === 'connected' || normalized === 'completed') return 'connected';
+    if (normalized === 'connecting' || normalized === 'checking' || normalized === 'new') return 'connecting';
+    if (normalized === 'disconnected' || normalized === 'failed' || normalized === 'closed') return 'disconnected';
+    return normalized || 'unknown';
+  }
+
+  function normalizeDataChannelState(state) {
+    const normalized = String(state || '').toLowerCase();
+    if (normalized === 'open') return 'open';
+    if (normalized === 'connecting') return 'connecting';
+    if (normalized === 'closing' || normalized === 'closed') return 'closed';
+    return normalized || 'unknown';
+  }
+
+  function shouldCleanupRealtimeState(state = {}) {
+    return !!(
+      state.realtimeActive ||
+      state.isRealtimeActive ||
+      state.realtimeConnecting ||
+      state.hasPeerConnection ||
+      state.hasStream ||
+      state.hasAudio ||
+      state.hasDataChannel
+    );
+  }
+
+  function describeRealtimeCloseReason(event) {
+    if (!event) return 'unknown';
+    if (event.reason) return String(event.reason);
+    if (event.message) return String(event.message);
+    if (event.code) return `code:${event.code}`;
+    if (event.type) return String(event.type);
+    return 'unknown';
   }
 
   function buildRealtimeSessionRequest(language, voice) {
@@ -153,6 +225,30 @@
     ];
   }
 
+  function getRealtimeLifecycleBlockers() {
+    return [
+      'startRealtime alterna estado e pode chamar stopRealtime',
+      'realtimeConnecting/realtimeActive/isRealtimeActive sao flags funcionais mutaveis',
+      'RTCPeerConnection e DataChannel sao criados e fechados no script.js',
+      'getUserMedia abre microfone dentro de startRealtime',
+      'pc.ontrack atualiza audio remoto e avatar',
+      'DataChannel message listener chama avatar, status, traducao, fallback e handleRealtimeTask',
+      'stopRealtime limpa tracks/audio/DC/PC e reativa wake word',
+      'micBtn e botoes continuous/realtime sao atualizados no mesmo lifecycle',
+      'announceToRealtime usa DataChannel e fallback TTS'
+    ];
+  }
+
+  function canMoveRealtimeLifecycle() {
+    return {
+      ok: false,
+      reason: 'Lifecycle Realtime ainda combina conexao WebRTC, microfone, DataChannel, UI, wake word e fallback TTS.',
+      blockers: getRealtimeLifecycleBlockers(),
+      handlers: getRealtimeLifecycleHandlers(),
+      state: getRealtimeLifecycleState()
+    };
+  }
+
   function canMoveRealtime() {
     return {
       ok: false,
@@ -166,6 +262,11 @@
     configureRealtimeHandlers,
     getRealtimeHandlers,
     getRealtimeState,
+    configureRealtimeLifecycleHandlers,
+    getRealtimeLifecycleHandlers,
+    getRealtimeLifecycleState,
+    getRealtimeLifecycleBlockers,
+    canMoveRealtimeLifecycle,
     getRealtimeCapabilities,
     getRealtimeBlockers,
     canMoveRealtime,
@@ -173,6 +274,10 @@
     normalizeRealtimeStatus,
     isRealtimeConnected,
     isRealtimeDataChannelOpen,
+    normalizePeerConnectionState,
+    normalizeDataChannelState,
+    shouldCleanupRealtimeState,
+    describeRealtimeCloseReason,
     buildRealtimeSessionRequest,
     parseRealtimeSessionResponse,
     parseRealtimeEvent,
