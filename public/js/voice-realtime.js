@@ -79,6 +79,56 @@
     }
   }
 
+  function getRealtimeEventType(event) {
+    return event?.type || '';
+  }
+
+  function normalizeRealtimeTaskText(text) {
+    return String(text || '');
+  }
+
+  function parseRealtimeTaskPayload(argsJson) {
+    try {
+      return {
+        request: normalizeRealtimeTaskText(JSON.parse(argsJson).request)
+      };
+    } catch {
+      return { request: '' };
+    }
+  }
+
+  function buildRealtimeFunctionOutputEvent(callId, output) {
+    return {
+      type: 'conversation.item.create',
+      item: {
+        type: 'function_call_output',
+        call_id: callId,
+        output: JSON.stringify(output)
+      }
+    };
+  }
+
+  function buildRealtimeResponseCreateEvent() {
+    return { type: 'response.create' };
+  }
+
+  function buildRealtimeAnnouncementEvent(message, language) {
+    const INSTR = {
+      BR: `Fale exatamente esta frase ao senhor, sem traduzir nem adicionar nada: "${message}"`,
+      ES: `Di exactamente esta frase al seÃ±or, sin traducir ni aÃ±adir nada: "${message}"`,
+      EN: `Say exactly this sentence to the user, do not translate or add anything: "${message}"`
+    };
+    const instruction = INSTR[language] || INSTR.EN;
+    return {
+      type: 'conversation.item.create',
+      item: { type: 'message', role: 'system', content: [{ type: 'input_text', text: instruction }] }
+    };
+  }
+
+  function buildRealtimeChatRequestBody(message, language, conclaveEnabled) {
+    return { message, fromVoice: true, language, conclaveEnabled };
+  }
+
   function getRealtimeCapabilities() {
     return {
       rtcPeerConnection: typeof window.RTCPeerConnection === 'function',
@@ -125,6 +175,13 @@
     isRealtimeDataChannelOpen,
     buildRealtimeSessionRequest,
     parseRealtimeSessionResponse,
-    parseRealtimeEvent
+    parseRealtimeEvent,
+    getRealtimeEventType,
+    normalizeRealtimeTaskText,
+    parseRealtimeTaskPayload,
+    buildRealtimeFunctionOutputEvent,
+    buildRealtimeResponseCreateEvent,
+    buildRealtimeAnnouncementEvent,
+    buildRealtimeChatRequestBody
   };
 })();

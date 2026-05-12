@@ -1183,7 +1183,8 @@ async function startRealtime() {
       ))
     });
     const sess = await tokenRes.json();
-    if (!sess.client_secret?.value) throw new Error(sess.error || 'No ephemeral token');
+    const realtimeSession = window.JarvisVoiceRealtime.parseRealtimeSessionResponse(sess);
+    if (!realtimeSession.ok) throw new Error(realtimeSession.error || 'No ephemeral token');
 
     const pc = new RTCPeerConnection();
     realtimePC = pc;
@@ -1202,19 +1203,21 @@ async function startRealtime() {
     realtimeDC = dc;
     dc.addEventListener('message', (e) => {
       try {
-        const ev = JSON.parse(e.data);
-        if (ev.type === 'input_audio_buffer.speech_started') setAvatarState('listening');
-        if (ev.type === 'input_audio_buffer.speech_stopped' || ev.type === 'input_audio_buffer.committed') setVoiceStatus('thinking');
-        if (ev.type?.startsWith('response.audio.') && ev.type !== 'response.audio.done') {
+        const ev = window.JarvisVoiceRealtime.parseRealtimeEvent(e.data);
+        if (!ev) return;
+        const evType = window.JarvisVoiceRealtime.getRealtimeEventType(ev);
+        if (evType === 'input_audio_buffer.speech_started') setAvatarState('listening');
+        if (evType === 'input_audio_buffer.speech_stopped' || evType === 'input_audio_buffer.committed') setVoiceStatus('thinking');
+        if (evType.startsWith('response.audio.') && evType !== 'response.audio.done') {
           isJarvisSpeaking = true;
           setAvatarState('speaking');
         }
-        if (ev.type === 'response.audio.done') {
+        if (evType === 'response.audio.done') {
           isJarvisSpeaking = false;
           lastVoiceCommandAt = Date.now();
           setAvatarState('idle');
         }
-        if (ev.type === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
+        if (evType === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
           setVoiceStatus('thinking');
           // Translate user transcript to match the active language toggle
           (async () => {
@@ -1242,11 +1245,11 @@ async function startRealtime() {
             handleRealtimeTask(null, JSON.stringify({ request: t }));
           }, 2000);
         }
-        if (ev.type === 'response.audio_transcript.done' && ev.transcript) {
+        if (evType === 'response.audio_transcript.done' && ev.transcript) {
           addTerminalLine(ev.transcript, 'jarvis-line');
         }
         // Handle function call: GPT-realtime asks us to dispatch to Claude
-        if (ev.type === 'response.function_call_arguments.done' && ev.name === 'execute_task') {
+        if (evType === 'response.function_call_arguments.done' && ev.name === 'execute_task') {
           // PATCH 10 v8.0: dedup — cancelar fallback timer e bloquear se ja despachou
           window._pendingTranscript = null;
           clearTimeout(window._pendingTranscriptTimer);
@@ -1262,7 +1265,7 @@ async function startRealtime() {
     const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
       method: 'POST',
       body: offer.sdp,
-      headers: { 'Authorization': `Bearer ${sess.client_secret.value}`, 'Content-Type': 'application/sdp' }
+      headers: { 'Authorization': `Bearer ${realtimeSession.clientSecret}`, 'Content-Type': 'application/sdp' }
     });
     await pc.setRemoteDescription({ type: 'answer', sdp: await sdpRes.text() });
 
@@ -1334,8 +1337,7 @@ async function routeVoiceCommand(text, { speak = true, announceRealtime = false 
 
 // Dispatch Realtime function call to Claude via existing /api/chat, then feed result back
 async function handleRealtimeTask(callId, argsJson) {
-  let request = '';
-  try { request = JSON.parse(argsJson).request || ''; } catch {}
+  const { request } = window.JarvisVoiceRealtime.parseRealtimeTaskPayload(argsJson);
   if (!request) return;
 
   if (isJarvisSpeaking || Date.now() - lastVoiceCommandAt < VOICE_COMMAND_COOLDOWN_MS) {
@@ -1354,36 +1356,28 @@ async function handleRealtimeTask(callId, argsJson) {
   try {
     const routed = await routeVoiceCommand(request, { speak: !realtimeActive, announceRealtime: realtimeActive });
     if (routed?.handled) {
-      if (callId && realtimeDC?.readyState === 'open') {
-        realtimeDC.send(JSON.stringify({
-          type: 'conversation.item.create',
-          item: {
-            type: 'function_call_output',
-            call_id: callId,
-            output: JSON.stringify({ status: 'handled', route: routed.route, message: routed.summary })
-          }
-        }));
+      if (callId && window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC)) {
+        realtimeDC.send(JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeFunctionOutputEvent(
+          callId,
+          { status: 'handled', route: routed.route, message: routed.summary }
+        )));
       }
       return;
     }
 
-    if (callId && realtimeDC?.readyState === 'open') {
-      realtimeDC.send(JSON.stringify({
-        type: 'conversation.item.create',
-        item: {
-          type: 'function_call_output',
-          call_id: callId,
-          output: JSON.stringify({ status: 'dispatched', message: 'Task is executing in background' })
-        }
-      }));
-      realtimeDC.send(JSON.stringify({ type: 'response.create' }));
+    if (callId && window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC)) {
+      realtimeDC.send(JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeFunctionOutputEvent(
+        callId,
+        { status: 'dispatched', message: 'Task is executing in background' }
+      )));
+      realtimeDC.send(JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeResponseCreateEvent()));
     }
 
     // Fire Claude in background via /api/chat (non-blocking)
     const r = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: request, fromVoice: true, language: currentLang, conclaveEnabled })
+      body: JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeChatRequestBody(request, currentLang, conclaveEnabled))
     });
     // Stream & render to terminal; completion announcement comes via SSE notification channel
     const reader = r.body.getReader();
@@ -1411,19 +1405,10 @@ async function handleRealtimeTask(callId, argsJson) {
 // Falls back to TTS if Realtime data channel is dead.
 function announceToRealtime(message) {
   // If Realtime DC is alive, inject the message for GPT to speak
-  if (realtimeActive && realtimeDC?.readyState === 'open') {
+  if (realtimeActive && window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC)) {
     try {
-      const INSTR = {
-        BR: `Fale exatamente esta frase ao senhor, sem traduzir nem adicionar nada: "${message}"`,
-        ES: `Di exactamente esta frase al señor, sin traducir ni añadir nada: "${message}"`,
-        EN: `Say exactly this sentence to the user, do not translate or add anything: "${message}"`
-      };
-      const instruction = INSTR[currentLang] || INSTR.EN;
-      realtimeDC.send(JSON.stringify({
-        type: 'conversation.item.create',
-        item: { type: 'message', role: 'system', content: [{ type: 'input_text', text: instruction }] }
-      }));
-      realtimeDC.send(JSON.stringify({ type: 'response.create' }));
+      realtimeDC.send(JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeAnnouncementEvent(message, currentLang)));
+      realtimeDC.send(JSON.stringify(window.JarvisVoiceRealtime.buildRealtimeResponseCreateEvent()));
       return;
     } catch (e) {
       console.warn('[JARVIS] Realtime DC send failed, falling back to TTS:', e.message);
