@@ -1313,7 +1313,7 @@ async function routeVoiceCommand(text, { speak = true, announceRealtime = false 
     const res = await fetch('/api/voice-command-router', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, language: currentLang })
+      body: JSON.stringify(window.JarvisVoiceRealtime.buildVoiceCommandRouterBody(text, currentLang))
     });
     const data = await res.json();
     if (!data.handled) return data;
@@ -1503,6 +1503,34 @@ window.JarvisVoiceRealtime.configureDataChannelHandlers({
   setVoiceStatus,
   setAvatarState,
   addTerminalLine
+});
+
+window.JarvisVoiceRealtime.configureRealtimeCommandHandlers({
+  getState() {
+    return {
+      realtimeActive,
+      realtimeConnecting,
+      isRealtimeActive,
+      dataChannelOpen: window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC),
+      isVoiceRequestInFlight,
+      isJarvisSpeaking,
+      lastVoiceCommandAt,
+      voiceCommandCooldownMs: VOICE_COMMAND_COOLDOWN_MS,
+      userGestureReceived,
+      voiceEnabled,
+      currentLang,
+      conclaveEnabled
+    };
+  },
+  routeVoiceCommand,
+  handleRealtimeTask,
+  announceToRealtime,
+  sendRealtimeEvent: 'kept-inline-with-realtimeDC.send',
+  addTerminalLine,
+  processStreamLine,
+  speakResponse,
+  setVoiceStatus,
+  setAvatarState
 });
 
 function initRealtimeBtn() {

@@ -35,6 +35,19 @@
     addTerminalLine: null
   };
 
+  const realtimeCommandHandlers = {
+    getState: null,
+    routeVoiceCommand: null,
+    handleRealtimeTask: null,
+    announceToRealtime: null,
+    sendRealtimeEvent: null,
+    addTerminalLine: null,
+    processStreamLine: null,
+    speakResponse: null,
+    setVoiceStatus: null,
+    setAvatarState: null
+  };
+
   function configureRealtimeHandlers(handlers = {}) {
     if (!handlers || typeof handlers !== 'object') return getRealtimeHandlers();
     Object.keys(realtimeHandlers).forEach((key) => {
@@ -105,6 +118,31 @@
     if (typeof dataChannelHandlers.getState !== 'function') return null;
     try {
       return dataChannelHandlers.getState();
+    } catch (err) {
+      return { error: err.message || String(err) };
+    }
+  }
+
+  function configureRealtimeCommandHandlers(handlers = {}) {
+    if (!handlers || typeof handlers !== 'object') return getRealtimeCommandHandlers();
+    Object.keys(realtimeCommandHandlers).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(handlers, key)) {
+        realtimeCommandHandlers[key] = handlers[key];
+      }
+    });
+    return getRealtimeCommandHandlers();
+  }
+
+  function getRealtimeCommandHandlers() {
+    return Object.fromEntries(
+      Object.entries(realtimeCommandHandlers).map(([key, value]) => [key, typeof value])
+    );
+  }
+
+  function getRealtimeCommandState() {
+    if (typeof realtimeCommandHandlers.getState !== 'function') return null;
+    try {
+      return realtimeCommandHandlers.getState();
     } catch (err) {
       return { error: err.message || String(err) };
     }
@@ -326,6 +364,34 @@
     ];
   }
 
+  function getRealtimeCommandBlockers() {
+    return [
+      'routeVoiceCommand chama /api/voice-command-router e processStreamLine',
+      'routeVoiceCommand pode chamar announceToRealtime ou speakResponse',
+      'handleRealtimeTask controla isVoiceRequestInFlight e lastVoiceCommandAt',
+      'handleRealtimeTask le isJarvisSpeaking e VOICE_COMMAND_COOLDOWN_MS',
+      'handleRealtimeTask envia function_call_output e response.create via realtimeDC.send',
+      'handleRealtimeTask faz fetch /api/chat e consome stream com TextDecoder',
+      'handleRealtimeTask chama processStreamLine durante streaming',
+      'announceToRealtime usa realtimeDC.send e fallback speakResponse',
+      'funcoes dependem de currentLang, conclaveEnabled, realtimeActive e userGestureReceived'
+    ];
+  }
+
+  function canMoveRealtimeCommands() {
+    return {
+      ok: false,
+      reason: 'Comandos Realtime ainda misturam roteamento backend, streaming de chat, flags globais, DataChannel real e fallback TTS.',
+      blockers: getRealtimeCommandBlockers(),
+      handlers: getRealtimeCommandHandlers(),
+      state: getRealtimeCommandState()
+    };
+  }
+
+  function buildVoiceCommandRouterBody(message, language) {
+    return { message, language };
+  }
+
   function canMoveDataChannelHandlers() {
     return {
       ok: false,
@@ -369,6 +435,11 @@
     getDataChannelState,
     getDataChannelHandlerBlockers,
     canMoveDataChannelHandlers,
+    configureRealtimeCommandHandlers,
+    getRealtimeCommandHandlers,
+    getRealtimeCommandState,
+    getRealtimeCommandBlockers,
+    canMoveRealtimeCommands,
     getRealtimeCapabilities,
     getRealtimeBlockers,
     canMoveRealtime,
@@ -396,6 +467,7 @@
     buildRealtimeResponseCreateEvent,
     buildRealtimeErrorSummary,
     buildRealtimeAnnouncementEvent,
-    buildRealtimeChatRequestBody
+    buildRealtimeChatRequestBody,
+    buildVoiceCommandRouterBody
   };
 })();
