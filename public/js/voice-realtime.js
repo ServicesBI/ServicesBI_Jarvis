@@ -22,6 +22,19 @@
     resumeWakeWord: null
   };
 
+  const dataChannelHandlers = {
+    getState: null,
+    onOpen: null,
+    onMessage: null,
+    onClose: null,
+    onError: null,
+    send: null,
+    handleRealtimeTask: null,
+    setVoiceStatus: null,
+    setAvatarState: null,
+    addTerminalLine: null
+  };
+
   function configureRealtimeHandlers(handlers = {}) {
     if (!handlers || typeof handlers !== 'object') return getRealtimeHandlers();
     Object.keys(realtimeHandlers).forEach((key) => {
@@ -67,6 +80,31 @@
     if (typeof realtimeLifecycleHandlers.getState !== 'function') return null;
     try {
       return realtimeLifecycleHandlers.getState();
+    } catch (err) {
+      return { error: err.message || String(err) };
+    }
+  }
+
+  function configureDataChannelHandlers(handlers = {}) {
+    if (!handlers || typeof handlers !== 'object') return getDataChannelHandlers();
+    Object.keys(dataChannelHandlers).forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(handlers, key)) {
+        dataChannelHandlers[key] = handlers[key];
+      }
+    });
+    return getDataChannelHandlers();
+  }
+
+  function getDataChannelHandlers() {
+    return Object.fromEntries(
+      Object.entries(dataChannelHandlers).map(([key, value]) => [key, typeof value])
+    );
+  }
+
+  function getDataChannelState() {
+    if (typeof dataChannelHandlers.getState !== 'function') return null;
+    try {
+      return dataChannelHandlers.getState();
     } catch (err) {
       return { error: err.message || String(err) };
     }
@@ -151,8 +189,42 @@
     }
   }
 
+  function parseDataChannelMessage(data) {
+    return parseRealtimeEvent(data);
+  }
+
+  function normalizeDataChannelEvent(data) {
+    return parseDataChannelMessage(data);
+  }
+
   function getRealtimeEventType(event) {
     return event?.type || '';
+  }
+
+  function getRealtimeFunctionCallName(event) {
+    return event?.name || '';
+  }
+
+  function getRealtimeFunctionCallArgs(event) {
+    return event?.arguments || '';
+  }
+
+  function classifyRealtimeEvent(event) {
+    const type = getRealtimeEventType(event);
+    if (!type) return 'invalid';
+    if (type === 'input_audio_buffer.speech_started') return 'speech-started';
+    if (type === 'input_audio_buffer.speech_stopped' || type === 'input_audio_buffer.committed') return 'speech-stopped';
+    if (type.startsWith('response.audio.') && type !== 'response.audio.done') return 'audio-streaming';
+    if (type === 'response.audio.done') return 'audio-done';
+    if (type === 'conversation.item.input_audio_transcription.completed' && event?.transcript) return 'transcription-completed';
+    if (type === 'response.audio_transcript.done' && event?.transcript) return 'audio-transcript-done';
+    if (type === 'response.function_call_arguments.done' && getRealtimeFunctionCallName(event) === 'execute_task') return 'execute-task';
+    return 'other';
+  }
+
+  function shouldHandleRealtimeEvent(event) {
+    const classification = classifyRealtimeEvent(event);
+    return classification !== 'invalid' && classification !== 'other';
   }
 
   function normalizeRealtimeTaskText(text) {
@@ -182,6 +254,10 @@
 
   function buildRealtimeResponseCreateEvent() {
     return { type: 'response.create' };
+  }
+
+  function buildRealtimeErrorSummary(error, fallback = 'Realtime event failed') {
+    return error?.message || error?.error || fallback;
   }
 
   function buildRealtimeAnnouncementEvent(message, language) {
@@ -239,6 +315,27 @@
     ];
   }
 
+  function getDataChannelHandlerBlockers() {
+    return [
+      'message handler atualiza setAvatarState/setVoiceStatus',
+      'transcription.completed chama /api/translate e addTerminalLine',
+      'fallback timer usa window._pendingTranscript/window._dispatchedThisTurn',
+      'execute_task chama handleRealtimeTask',
+      'audio.done altera isJarvisSpeaking e lastVoiceCommandAt',
+      'handlers ainda dependem de flags funcionais do script.js'
+    ];
+  }
+
+  function canMoveDataChannelHandlers() {
+    return {
+      ok: false,
+      reason: 'Handlers do DataChannel ainda misturam parsing com estado visual, timers, traducao e dispatch para tarefas.',
+      blockers: getDataChannelHandlerBlockers(),
+      handlers: getDataChannelHandlers(),
+      state: getDataChannelState()
+    };
+  }
+
   function canMoveRealtimeLifecycle() {
     return {
       ok: false,
@@ -267,6 +364,11 @@
     getRealtimeLifecycleState,
     getRealtimeLifecycleBlockers,
     canMoveRealtimeLifecycle,
+    configureDataChannelHandlers,
+    getDataChannelHandlers,
+    getDataChannelState,
+    getDataChannelHandlerBlockers,
+    canMoveDataChannelHandlers,
     getRealtimeCapabilities,
     getRealtimeBlockers,
     canMoveRealtime,
@@ -281,11 +383,18 @@
     buildRealtimeSessionRequest,
     parseRealtimeSessionResponse,
     parseRealtimeEvent,
+    parseDataChannelMessage,
+    normalizeDataChannelEvent,
     getRealtimeEventType,
+    getRealtimeFunctionCallName,
+    getRealtimeFunctionCallArgs,
+    classifyRealtimeEvent,
+    shouldHandleRealtimeEvent,
     normalizeRealtimeTaskText,
     parseRealtimeTaskPayload,
     buildRealtimeFunctionOutputEvent,
     buildRealtimeResponseCreateEvent,
+    buildRealtimeErrorSummary,
     buildRealtimeAnnouncementEvent,
     buildRealtimeChatRequestBody
   };

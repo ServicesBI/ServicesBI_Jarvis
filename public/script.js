@@ -1203,21 +1203,21 @@ async function startRealtime() {
     realtimeDC = dc;
     dc.addEventListener('message', (e) => {
       try {
-        const ev = window.JarvisVoiceRealtime.parseRealtimeEvent(e.data);
+        const ev = window.JarvisVoiceRealtime.parseDataChannelMessage(e.data);
         if (!ev) return;
-        const evType = window.JarvisVoiceRealtime.getRealtimeEventType(ev);
-        if (evType === 'input_audio_buffer.speech_started') setAvatarState('listening');
-        if (evType === 'input_audio_buffer.speech_stopped' || evType === 'input_audio_buffer.committed') setVoiceStatus('thinking');
-        if (evType.startsWith('response.audio.') && evType !== 'response.audio.done') {
+        const evKind = window.JarvisVoiceRealtime.classifyRealtimeEvent(ev);
+        if (evKind === 'speech-started') setAvatarState('listening');
+        if (evKind === 'speech-stopped') setVoiceStatus('thinking');
+        if (evKind === 'audio-streaming') {
           isJarvisSpeaking = true;
           setAvatarState('speaking');
         }
-        if (evType === 'response.audio.done') {
+        if (evKind === 'audio-done') {
           isJarvisSpeaking = false;
           lastVoiceCommandAt = Date.now();
           setAvatarState('idle');
         }
-        if (evType === 'conversation.item.input_audio_transcription.completed' && ev.transcript) {
+        if (evKind === 'transcription-completed') {
           setVoiceStatus('thinking');
           // Translate user transcript to match the active language toggle
           (async () => {
@@ -1245,17 +1245,17 @@ async function startRealtime() {
             handleRealtimeTask(null, JSON.stringify({ request: t }));
           }, 2000);
         }
-        if (evType === 'response.audio_transcript.done' && ev.transcript) {
+        if (evKind === 'audio-transcript-done') {
           addTerminalLine(ev.transcript, 'jarvis-line');
         }
         // Handle function call: GPT-realtime asks us to dispatch to Claude
-        if (evType === 'response.function_call_arguments.done' && ev.name === 'execute_task') {
+        if (evKind === 'execute-task') {
           // PATCH 10 v8.0: dedup — cancelar fallback timer e bloquear se ja despachou
           window._pendingTranscript = null;
           clearTimeout(window._pendingTranscriptTimer);
           if (window._dispatchedThisTurn) return; // dedup: fallback ja disparou
           window._dispatchedThisTurn = true;
-          handleRealtimeTask(ev.call_id, ev.arguments);
+          handleRealtimeTask(ev.call_id, window.JarvisVoiceRealtime.getRealtimeFunctionCallArgs(ev));
         }
       } catch {}
     });
@@ -1481,6 +1481,28 @@ window.JarvisVoiceRealtime.configureRealtimeLifecycleHandlers({
   setVoiceStatus,
   setAvatarState,
   resumeWakeWord: startWakeWord
+});
+
+window.JarvisVoiceRealtime.configureDataChannelHandlers({
+  getState() {
+    return {
+      hasDataChannel: !!realtimeDC,
+      readyState: realtimeDC?.readyState || '',
+      normalizedReadyState: window.JarvisVoiceRealtime.normalizeDataChannelState(realtimeDC?.readyState || ''),
+      open: window.JarvisVoiceRealtime.isRealtimeDataChannelOpen(realtimeDC),
+      realtimeActive,
+      realtimeConnecting,
+      isRealtimeActive,
+      pendingTranscript: !!window._pendingTranscript,
+      dispatchedThisTurn: !!window._dispatchedThisTurn,
+      hasPendingTranscriptTimer: !!window._pendingTranscriptTimer
+    };
+  },
+  onMessage: 'kept-in-script-js',
+  handleRealtimeTask,
+  setVoiceStatus,
+  setAvatarState,
+  addTerminalLine
 });
 
 function initRealtimeBtn() {
