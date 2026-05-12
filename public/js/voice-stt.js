@@ -91,6 +91,71 @@
     }
   }
 
+  function getAudioBlobSize(blob) {
+    return blob?.size || 0;
+  }
+
+  function validateCapturedAudio({ duration = 0, blob = null, peakVolume = 0 } = {}) {
+    if (duration < 800) {
+      return {
+        ok: false,
+        reason: 'too-short',
+        message: '[warn] Recording too short. Hold the mic button and speak, then click again to stop.'
+      };
+    }
+    if (getAudioBlobSize(blob) < 1000) {
+      return {
+        ok: false,
+        reason: 'empty-audio',
+        message: '[warn] No audio captured. Check your microphone.'
+      };
+    }
+    if (peakVolume < 5) {
+      return {
+        ok: false,
+        reason: 'silence',
+        message: '[warn] No voice detected — only silence captured. Speak louder or check mic.'
+      };
+    }
+    return { ok: true };
+  }
+
+  function buildSttFormData(audioBlob, options = {}) {
+    const formData = new FormData();
+    formData.append(options.fieldName || 'audio', audioBlob, options.fileName || 'audio.webm');
+    return formData;
+  }
+
+  function normalizeTranscriptText(text) {
+    return String(text || '').trim();
+  }
+
+  function parseSttResponse(data) {
+    const payload = data || {};
+    const text = normalizeTranscriptText(payload.text);
+    if (payload.filtered) {
+      return {
+        ok: false,
+        filtered: true,
+        text,
+        message: `[warn] ${payload.reason || 'No clear speech detected.'}  Speak clearly and try again.`
+      };
+    }
+    if (!text) {
+      return {
+        ok: false,
+        filtered: false,
+        text,
+        message: '[warn] No speech detected. Try again.'
+      };
+    }
+    return { ok: true, filtered: false, text };
+  }
+
+  function getSttErrorMessage(error, fallback = 'Transcription failed') {
+    return error?.error || error?.message || fallback;
+  }
+
   function canMoveRecording() {
     return {
       ok: false,
@@ -135,6 +200,12 @@
     configureRecordingHandlers,
     getRecordingHandlers,
     getRecordingState,
+    getAudioBlobSize,
+    validateCapturedAudio,
+    buildSttFormData,
+    normalizeTranscriptText,
+    parseSttResponse,
+    getSttErrorMessage,
     canMoveRecording,
     canMoveWakeWord
   };

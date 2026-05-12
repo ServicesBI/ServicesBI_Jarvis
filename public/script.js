@@ -1581,21 +1581,10 @@ async function startRecording() {
       stream.getTracks().forEach(t => t.stop());
 
       const duration = Date.now() - recordingStartTime;
-      if (duration < 800) {
-        addTerminalLine('[warn] Recording too short. Hold the mic button and speak, then click again to stop.', 'warn-line');
-        setAvatarState('idle');
-        return;
-      }
-
       const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-      if (blob.size < 1000) {
-        addTerminalLine('[warn] No audio captured. Check your microphone.', 'warn-line');
-        setAvatarState('idle');
-        return;
-      }
-
-      if (peakVolume < 5) {
-        addTerminalLine('[warn] No voice detected — only silence captured. Speak louder or check mic.', 'warn-line');
+      const audioValidation = window.JarvisVoiceSTT.validateCapturedAudio({ duration, blob, peakVolume });
+      if (!audioValidation.ok) {
+        addTerminalLine(audioValidation.message, 'warn-line');
         setAvatarState('idle');
         return;
       }
@@ -1668,31 +1657,25 @@ async function transcribeAndSend(audioBlob) {
     setAvatarState('thinking');
     addTerminalLine('[system] Transcribing voice...', 'system-line');
 
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'audio.webm');
+    const formData = window.JarvisVoiceSTT.buildSttFormData(audioBlob);
 
     const sttRes = await fetch('/api/stt', { method: 'POST', body: formData });
     if (!sttRes.ok) {
       const err = await sttRes.json().catch(() => ({ error: 'STT failed' }));
-      throw new Error(err.error || 'Transcription failed');
+      throw new Error(window.JarvisVoiceSTT.getSttErrorMessage(err));
     }
     const sttData = await sttRes.json();
+    const parsedStt = window.JarvisVoiceSTT.parseSttResponse(sttData);
 
     // Handle filtered hallucinations
-    if (sttData.filtered) {
-      addTerminalLine(`[warn] ${sttData.reason || 'No clear speech detected.'}  Speak clearly and try again.`, 'warn-line');
-      setAvatarState('idle');
-      return;
-    }
-
-    if (!sttData.text || !sttData.text.trim()) {
-      addTerminalLine('[warn] No speech detected. Try again.', 'warn-line');
+    if (!parsedStt.ok) {
+      addTerminalLine(parsedStt.message, 'warn-line');
       setAvatarState('idle');
       return;
     }
 
     // Use sendMessage with fromVoice=true for the optimized pipeline
-    await sendMessage(sttData.text, true);
+    await sendMessage(parsedStt.text, true);
   } catch (err) {
     addTerminalLine(`[error] Voice processing failed: ${err.message}`, 'error-line');
     playErrorSound();
