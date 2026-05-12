@@ -320,16 +320,18 @@
   function canMoveSendMessage() {
     return {
       ok: false,
-      reason: 'sendMessage ainda depende de voz/realtime/STT/TTS, avatar/modelos/agentes/sons, anexos, TELA, processStreamLine e streaming de /api/chat.',
+      reason: 'sendMessage ainda depende de voz/realtime/STT/TTS, avatar/modelos/agentes/sons e do controle principal de streaming de /api/chat.',
+      processStreamLineMoved: true,
       blockers: [
         'voiceEnabled/userGestureReceived/isRealtimeActive/realtimeActive/isJarvisSpeaking/isVoiceRequestInFlight/lastVoiceCommandAt',
         'speakResponse/scheduleNextListen/routeVoiceCommand',
         'setAvatarState/setActiveModel/highlightAgents/playSendSound/playReceiveSound/playErrorSound',
+        'currentLang/conclaveEnabled',
         'window.JarvisAttachments',
         'window.JarvisScreenCapture',
-        'processStreamLine',
-        'fetch /api/chat com streaming e buffer final sem newline'
-      ]
+        'fetch /api/chat com reader, TextDecoder, loop de streaming, claudeSilent/gptResponse/fullResponse e buffer final sem newline'
+      ],
+      recommendation: 'Mover sendMessage depois do Bloco 12, quando voz/realtime/STT/TTS puderem ser desacoplados com uma bridge menor.'
     };
   }
 
