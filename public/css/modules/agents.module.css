@@ -1,0 +1,200 @@
+/* Agents list */
+.agents-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.agent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(0,228,255,0.12);
+  border: 1px solid rgba(0,228,255,0.3);
+  border-radius: 100px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 8px;
+  color: var(--cyan);
+  text-transform: lowercase;
+}
+.agent-pill.idle {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.1);
+  color: var(--text-dim);
+}
+.agent-pill.active {
+  animation: agent-pulse 1.5s ease-in-out infinite;
+}
+@keyframes agent-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(0,228,255,0.3); }
+  50% { box-shadow: 0 0 12px rgba(0,228,255,0.6); }
+}
+.agent-pill::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ═══ AIOX SQUAD GRID ═══ */
+.aiox-squad-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  padding: 4px 0;
+}
+.aiox-agent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 2px 4px;
+  background: rgba(0,228,255,0.03);
+  border: 1px solid rgba(0,228,255,0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.aiox-agent::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.aiox-agent:hover {
+  background: rgba(0,228,255,0.08);
+  border-color: rgba(0,228,255,0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,228,255,0.15);
+}
+.aiox-agent:hover::before { opacity: 1; }
+.aiox-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  position: absolute;
+  top: 4px; right: 4px;
+}
+.aiox-dot.online {
+  background: #0f0;
+  box-shadow: 0 0 4px #0f0;
+  animation: agent-pulse 2s ease-in-out infinite;
+}
+.aiox-dot.busy {
+  background: var(--gold);
+  box-shadow: 0 0 4px var(--gold);
+  animation: agent-pulse 0.8s ease-in-out infinite;
+}
+.aiox-dot.offline {
+  background: #555;
+}
+@keyframes agent-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.aiox-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0,228,255,0.06);
+  border: 1px solid rgba(0,228,255,0.2);
+  padding: 5px;
+  margin-bottom: 2px;
+  transition: all 0.3s;
+}
+.aiox-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.aiox-agent:hover .aiox-icon {
+  transform: scale(1.1);
+}
+/* Agent-specific colors */
+.ai-master { color: #ffd700; border-color: rgba(255,215,0,0.3); background: rgba(255,215,0,0.08); }
+.ai-architect { color: #a78bfa; border-color: rgba(167,139,250,0.3); background: rgba(167,139,250,0.08); }
+.ai-dev { color: #00e4ff; border-color: rgba(0,228,255,0.3); background: rgba(0,228,255,0.08); }
+.ai-data { color: #34d399; border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.08); }
+.ai-devops { color: #f97316; border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.08); }
+.ai-ux { color: #f472b6; border-color: rgba(244,114,182,0.3); background: rgba(244,114,182,0.08); }
+.ai-pm { color: #60a5fa; border-color: rgba(96,165,250,0.3); background: rgba(96,165,250,0.08); }
+.ai-po { color: #fb7185; border-color: rgba(251,113,133,0.3); background: rgba(251,113,133,0.08); }
+.ai-analyst { color: #a3e635; border-color: rgba(163,230,53,0.3); background: rgba(163,230,53,0.08); }
+.ai-qa { color: #2dd4bf; border-color: rgba(45,212,191,0.3); background: rgba(45,212,191,0.08); }
+.ai-sm { color: #c084fc; border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.08); }
+.ai-squad { color: #fbbf24; border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); }
+.aiox-agent:hover .ai-master { box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+.aiox-agent:hover .ai-architect { box-shadow: 0 0 10px rgba(167,139,250,0.3); }
+.aiox-agent:hover .ai-dev { box-shadow: 0 0 10px rgba(0,228,255,0.3); }
+.aiox-agent:hover .ai-data { box-shadow: 0 0 10px rgba(52,211,153,0.3); }
+.aiox-agent:hover .ai-devops { box-shadow: 0 0 10px rgba(249,115,22,0.3); }
+.aiox-agent:hover .ai-ux { box-shadow: 0 0 10px rgba(244,114,182,0.3); }
+.aiox-agent:hover .ai-pm { box-shadow: 0 0 10px rgba(96,165,250,0.3); }
+.aiox-agent:hover .ai-po { box-shadow: 0 0 10px rgba(251,113,133,0.3); }
+.aiox-agent:hover .ai-analyst { box-shadow: 0 0 10px rgba(163,230,53,0.3); }
+.aiox-agent:hover .ai-qa { box-shadow: 0 0 10px rgba(45,212,191,0.3); }
+.aiox-agent:hover .ai-sm { box-shadow: 0 0 10px rgba(192,132,252,0.3); }
+.aiox-agent:hover .ai-squad { box-shadow: 0 0 10px rgba(251,191,36,0.3); }
+.aiox-name {
+  font-family: Orbitron, sans-serif;
+  font-size: 7px;
+  color: var(--cyan);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.aiox-role {
+  font-size: 6px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* Entity rows compactos no painel lateral */
+.hud-right .entity-list:not(.aiox-squad-grid) .entity-row {
+  padding: 4px 6px !important;
+  font-size: 9px !important;
+}
+.hud-right .entity-tag {
+  font-size: 7px !important;
+  padding: 1px 4px !important;
+}
+
+/* ── 7. AGENT READINESS BARS ── */
+.agent-ready-bar {
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(0,228,255,0.06);
+  overflow: hidden;
+}
+.agent-ready-fill {
+  height: 100%;
+  width: calc(var(--ready, 0) * 1%);
+  background: linear-gradient(90deg, rgba(0,228,255,0.3), var(--sf-primary));
+  transition: width 0.5s ease;
+}
+
+/* Agent readiness bars */
+.agent-ready-bar { height: 2px !important; background: rgba(0,228,255,0.1) !important; border-radius: 1px !important; overflow: hidden !important; margin-top: 2px !important; }
+.agent-ready-bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: var(--ready, 80%);
+  background: linear-gradient(90deg, #00e4ff, #00ffaa) !important;
+  box-shadow: 0 0 4px #00e4ff;
+  animation: bar-pulse 3s ease-in-out infinite;
+}
+@keyframes bar-pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+

@@ -1,0 +1,66 @@
+/* ─── 4. ACTIVITY BAR (AI Models) ─── */
+.activity-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(90,109,153,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.activity-fill {
+  height: 100%;
+  width: 10%;
+  border-radius: 2px;
+  background: rgba(0,228,255,0.25);
+  transition: width 0.4s ease, opacity 0.4s ease;
+  will-change: width, opacity;
+}
+.activity-bar.active .activity-fill {
+  width: 100%;
+  opacity: 1;
+  background: linear-gradient(90deg, transparent, #00e4ff, transparent);
+  animation: activity-sweep 1.8s ease-in-out infinite;
+}
+@keyframes activity-sweep {
+  0%   { transform: translateX(-100%); opacity: 0.6; }
+  50%  { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0.6; }
+}
+
+/* ── 5. AI MODEL ACTIVITY BARS ── */
+.activity-bar {
+  position: absolute;
+  bottom: 1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(0,228,255,0.06);
+  overflow: hidden;
+  border-radius: 0 0 2px 2px;
+}
+.activity-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--sf-primary), var(--sf-accent));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  box-shadow: 0 0 4px var(--sf-primary);
+}
+/* Active state: animate the bar */
+.entity-row.active .activity-bar-fill {
+  width: 100%;
+  animation: activity-bar-pulse 1.5s ease-in-out infinite;
+}
+@keyframes activity-bar-pulse {
+  0%, 100% { width: 30%; opacity: 0.6; }
+  50% { width: 100%; opacity: 1; }
+}
+
+/* AI Model tags: colored per model */
+.entity-row[data-entity='opus'] .entity-tag { color: #ff6b6b !important; border-color: #ff6b6b !important; }
+.entity-row[data-entity='sonnet'] .entity-tag { color: #00e4ff !important; border-color: #00e4ff !important; }
+.entity-row[data-entity='haiku'] .entity-tag { color: #ffd700 !important; border-color: #ffd700 !important; }
+.entity-row[data-entity='gpt-realtime'] .entity-tag { color: #00ff88 !important; border-color: #00ff88 !important; }
+.entity-row[data-entity='gpt-mini'] .entity-tag { color: #cc88ff !important; border-color: #cc88ff !important; }
+.entity-tag { text-shadow: 0 0 4px currentColor !important; border: 1px solid currentColor !important; background: rgba(0,228,255,0.06) !important; }
+

@@ -1,0 +1,339 @@
+/* Metrics grid */
+.hud-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+.metric-item {
+  text-align: center;
+  padding: 8px 4px;
+  background: rgba(0,228,255,0.04);
+  border: 1px solid rgba(0,228,255,0.15);
+  border-radius: 6px;
+}
+.metric-label {
+  font-family: "Orbitron", sans-serif;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.metric-value {
+  font-family: "Orbitron", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cyan);
+  text-shadow: 0 0 6px rgba(0,228,255,0.4);
+}
+
+/* Metrics no bottom — 4 colunas */
+.hud-bottom .hud-metrics {
+  grid-template-columns: 1fr 1fr 1fr 1fr !important;
+}
+.hud-bottom .metric-item {
+  padding: 6px 4px !important;
+}
+.hud-bottom .metric-value {
+  font-size: 12px !important;
+}
+
+/* Mic button inside Metrics VOZ card */
+.metric-voice-mic {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 8px !important;
+}
+.metric-voice-mic .mic-fab {
+  position: relative !important;
+  width: 36px !important;
+  height: 36px !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  flex-shrink: 0;
+}
+.metric-voice-mic .mic-fab svg { width: 16px !important; height: 16px !important; }
+.metric-voice-mic .mic-ring { inset: -3px !important; }
+/* ─── 1. CIRCULAR GAUGE ─── */
+.gauge {
+  --value: 0;
+  position: relative;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    #00e4ff calc(var(--value) * 1%),
+    rgba(90,109,153,0.2) calc(var(--value) * 1%)
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  transition: --value 0.6s ease;
+  will-change: transform;
+  filter: drop-shadow(0 0 4px rgba(0,228,255,0.45));
+}
+/* tick marks at 0, 25, 50, 75 */
+.gauge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 0deg,   rgba(0,228,255,0.5) 0.8%, transparent 0.8%),
+    conic-gradient(from 90deg,  rgba(0,228,255,0.5) 0.8%, transparent 0.8%),
+    conic-gradient(from 180deg, rgba(0,228,255,0.5) 0.8%, transparent 0.8%),
+    conic-gradient(from 270deg, rgba(0,228,255,0.5) 0.8%, transparent 0.8%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px), #000 calc(100% - 2px), transparent calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 6px), #000 calc(100% - 2px), transparent calc(100% - 2px));
+  pointer-events: none;
+  z-index: 1;
+}
+.gauge-value {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #00e4ff;
+  text-shadow: 0 0 6px rgba(0,228,255,0.4);
+}
+
+/* ─── 3. WAVEFORM / HEARTBEAT LINE ─── */
+.waveform {
+  width: 100%;
+  height: 30px;
+  position: relative;
+  overflow: hidden;
+}
+.waveform::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      transparent 10%,
+      rgba(0,228,255,0.0) 10%,
+      rgba(0,228,255,0.0) 12%,
+      transparent 12%,
+      transparent 35%,
+      rgba(0,228,255,0.0) 35%,
+      rgba(0,228,255,0.0) 36%,
+      transparent 36%,
+      transparent 38%
+    );
+  will-change: transform;
+}
+.waveform::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30'%3E%3Cpath d='M0,15 L20,15 L25,15 L30,5 L35,25 L40,12 L45,18 L50,15 L70,15 L75,15 L80,2 L85,28 L90,10 L95,20 L100,15 L120,15 L125,15 L130,5 L135,25 L140,12 L145,18 L150,15 L170,15 L175,15 L180,2 L185,28 L190,10 L195,20 L200,15' fill='none' stroke='%2300e4ff' stroke-width='1.5'/%3E%3C/svg%3E") repeat-x center / 200px 30px;
+  filter: drop-shadow(0 0 4px rgba(0,228,255,0.5));
+  will-change: transform;
+  animation: waveform-scroll 3s linear infinite;
+}
+@keyframes waveform-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(50%); }
+}
+
+/* ── 1. CIRCULAR GAUGE (conic-gradient) ── */
+.hud-widget-gauge {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+  overflow: visible !important;
+  padding: 10px 10px 10px 14px !important;
+}
+.gauge-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--sf-primary) 0deg,
+    var(--sf-primary) calc(var(--value, 0) * 3.6deg),
+    rgba(0,228,255,0.08) calc(var(--value, 0) * 3.6deg),
+    rgba(0,228,255,0.08) 360deg
+  );
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(0,228,255,0.15), inset 0 0 6px rgba(0,228,255,0.05);
+  transition: background 0.6s ease;
+}
+.gauge-inner {
+  position: absolute;
+  inset: 5px;
+  background: var(--sf-bg-deep);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-pct {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--sf-primary);
+  text-shadow: 0 0 6px rgba(0,228,255,0.5);
+}
+.gauge-ticks {
+  position: absolute;
+  inset: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
+  animation: gauge-tick-spin 30s linear infinite;
+  pointer-events: none;
+}
+@keyframes gauge-tick-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* Outer dashed ring on gauge */
+.gauge-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(0,228,255,0.15);
+  animation: gauge-tick-spin 20s linear infinite reverse;
+  pointer-events: none;
+}
+
+/* ── 2. WEATHER ANIMATED CANVAS ── */
+.weather-anim-canvas {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 36px;
+  height: 36px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ── 10. WAVEFORM / HEARTBEAT LINE ── */
+.hud-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 18px;
+  padding: 0 4px;
+  margin-bottom: 4px;
+}
+.wf-bar {
+  flex: 1;
+  min-width: 3px;
+  background: linear-gradient(to top, var(--sf-primary), rgba(0,228,255,0.3));
+  border-radius: 1px 1px 0 0;
+  animation: wf-wave 1.5s ease-in-out infinite;
+  box-shadow: 0 0 3px rgba(0,228,255,0.2);
+}
+.wf-bar:nth-child(1)  { animation-delay: 0.00s; height: 30%; }
+.wf-bar:nth-child(2)  { animation-delay: 0.06s; height: 50%; }
+.wf-bar:nth-child(3)  { animation-delay: 0.12s; height: 80%; }
+.wf-bar:nth-child(4)  { animation-delay: 0.18s; height: 100%; }
+.wf-bar:nth-child(5)  { animation-delay: 0.24s; height: 70%; }
+.wf-bar:nth-child(6)  { animation-delay: 0.30s; height: 40%; }
+.wf-bar:nth-child(7)  { animation-delay: 0.36s; height: 20%; }
+.wf-bar:nth-child(8)  { animation-delay: 0.42s; height: 55%; }
+.wf-bar:nth-child(9)  { animation-delay: 0.48s; height: 90%; }
+.wf-bar:nth-child(10) { animation-delay: 0.54s; height: 60%; }
+.wf-bar:nth-child(11) { animation-delay: 0.60s; height: 35%; }
+.wf-bar:nth-child(12) { animation-delay: 0.66s; height: 75%; }
+.wf-bar:nth-child(13) { animation-delay: 0.72s; height: 45%; }
+.wf-bar:nth-child(14) { animation-delay: 0.78s; height: 85%; }
+.wf-bar:nth-child(15) { animation-delay: 0.84s; height: 25%; }
+.wf-bar:nth-child(16) { animation-delay: 0.90s; height: 65%; }
+.wf-bar:nth-child(17) { animation-delay: 0.96s; height: 95%; }
+.wf-bar:nth-child(18) { animation-delay: 1.02s; height: 50%; }
+.wf-bar:nth-child(19) { animation-delay: 1.08s; height: 30%; }
+.wf-bar:nth-child(20) { animation-delay: 1.14s; height: 70%; }
+.wf-bar:nth-child(21) { animation-delay: 1.20s; height: 40%; }
+.wf-bar:nth-child(22) { animation-delay: 1.26s; height: 80%; }
+.wf-bar:nth-child(23) { animation-delay: 1.30s; height: 55%; }
+.wf-bar:nth-child(24) { animation-delay: 1.34s; height: 35%; }
+@keyframes wf-wave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.3); }
+}
+
+/* ── 11. EQUALIZER BARS ── */
+.hud-equalizer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 16px;
+  margin: 4px 0;
+}
+.eq-bar {
+  width: 6px;
+  background: linear-gradient(to top, var(--sf-accent), rgba(0,255,136,0.2));
+  border-radius: 1px 1px 0 0;
+  animation: eq-bounce 1s ease-in-out infinite;
+  box-shadow: 0 0 3px rgba(0,255,136,0.15);
+}
+.eq-bar:nth-child(1) { height: 40%; animation-delay: 0.0s; }
+.eq-bar:nth-child(2) { height: 70%; animation-delay: 0.1s; }
+.eq-bar:nth-child(3) { height: 55%; animation-delay: 0.2s; }
+.eq-bar:nth-child(4) { height: 90%; animation-delay: 0.3s; }
+.eq-bar:nth-child(5) { height: 45%; animation-delay: 0.15s; }
+.eq-bar:nth-child(6) { height: 80%; animation-delay: 0.25s; }
+.eq-bar:nth-child(7) { height: 60%; animation-delay: 0.35s; }
+.eq-bar:nth-child(8) { height: 35%; animation-delay: 0.05s; }
+@keyframes eq-bounce {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.2); }
+}
+
+/* Gauges: gradient fill + glow */
+.gauge-ring {
+  background: conic-gradient(
+    #00e4ff 0%,
+    #00ffaa calc(var(--value, 0) * 0.7%),
+    #ffd700 calc(var(--value, 0) * 1%),
+    rgba(0,228,255,0.08) calc(var(--value, 0) * 1%),
+    rgba(0,228,255,0.08) 100%
+  ) !important;
+  filter: drop-shadow(0 0 6px rgba(0,228,255,0.5)) !important;
+  transition: background 0.8s ease !important;
+}
+.gauge-value, .gauge-pct {
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 11px !important;
+  color: var(--cyan) !important;
+  text-shadow: 0 0 8px rgba(0,228,255,0.6) !important;
+}
+
+/* Waveform bars: glow */
+.waveform-bar {
+  background: linear-gradient(180deg, #00e4ff, #004466) !important;
+  box-shadow: 0 0 3px rgba(0,228,255,0.5) !important;
+}
+
+/* Equalizer bounce */
+.eq-bar { animation: eq-bounce 0.8s ease-in-out infinite alternate !important; }
+.eq-bar:nth-child(2) { animation-delay: 0.1s !important; }
+.eq-bar:nth-child(3) { animation-delay: 0.2s !important; }
+.eq-bar:nth-child(4) { animation-delay: 0.3s !important; }
+.eq-bar:nth-child(5) { animation-delay: 0.15s !important; }
+.eq-bar:nth-child(6) { animation-delay: 0.25s !important; }
+@keyframes eq-bounce { 0% { transform: scaleY(0.3); } 100% { transform: scaleY(1); } }
+
+/* Text glow on values */
+.metric-value, .widget-value { text-shadow: 0 0 6px rgba(0,228,255,0.4) !important; }
+

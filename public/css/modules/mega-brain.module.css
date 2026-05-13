@@ -1,0 +1,264 @@
+/* ── Ingest Button (Mega-Brain section) ── */
+.hud-ingest-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,228,255,0.05));
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 8px;
+  color: var(--gold);
+  font-family: "Orbitron", sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.hud-ingest-btn svg { width: 16px; height: 16px; color: var(--gold); flex-shrink: 0; }
+.hud-ingest-btn:hover {
+  background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,228,255,0.1));
+  border-color: var(--gold);
+  transform: translateX(-2px);
+  box-shadow: 0 0 20px rgba(255,215,0,0.3);
+}
+
+/* Ingest modal sizing */
+.modal-ingest {
+  width: 90vw;
+  max-width: 580px;
+  max-height: 80vh;
+}
+
+/* ═══ INGEST TABS ═══ */
+.ingest-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.ingest-tab {
+  flex: 1;
+  padding: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-family: "Orbitron", sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.ingest-tab:hover { background: rgba(0,228,255,0.08); color: var(--text); }
+.ingest-tab.active {
+  background: rgba(0,228,255,0.12);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.ingest-panel { display: none; }
+.ingest-panel.active { display: block; }
+
+.ingest-label {
+  display: block;
+  font-family: "Orbitron", sans-serif;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.ingest-textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,228,255,0.2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ingest-textarea:focus { border-color: var(--cyan); box-shadow: 0 0 12px rgba(0,228,255,0.15); }
+.ingest-textarea::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+.ingest-select {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,228,255,0.2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  outline: none;
+}
+.ingest-select option { background: #0a0f24; }
+
+/* Dropzone */
+.ingest-dropzone {
+  border: 2px dashed rgba(0,228,255,0.3);
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.ingest-dropzone:hover, .ingest-dropzone.dragover {
+  border-color: var(--cyan);
+  background: rgba(0,228,255,0.06);
+  color: var(--cyan);
+}
+.ingest-dropzone svg { margin-bottom: 10px; color: var(--cyan); opacity: 0.5; }
+.ingest-dropzone p { font-size: 12px; line-height: 1.6; }
+.ingest-dropzone strong { color: var(--cyan); }
+.ingest-filetypes { font-size: 10px; opacity: 0.4; margin-top: 8px; }
+.ingest-file-name {
+  margin-top: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--cyan);
+}
+
+/* Session tab */
+.ingest-session-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+.ingest-session-items { display: flex; flex-direction: column; gap: 6px; }
+.ingest-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0,255,136,0.05);
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--text);
+}
+.ingest-check span { color: #00ff88; font-weight: 700; }
+.ingest-session-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 12px;
+  font-style: italic;
+}
+
+.ingest-status {
+  margin-top: 12px;
+  font-size: 11px;
+  font-family: "JetBrains Mono", monospace;
+  color: var(--cyan);
+  min-height: 20px;
+}
+
+/* Ingest button compacto no bottom */
+.hud-bottom .hud-ingest-btn {
+  margin-top: 4px;
+  padding: 8px 10px;
+  font-size: 8px;
+}
+.hud-bottom .hud-ingest-btn svg { width: 14px; height: 14px; }
+
+/* Fix: botao ingerir sempre visivel e clicavel */
+#ingest-submit {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, #00e4ff, #ffd700) !important;
+  color: #050714 !important;
+  font-weight: 800 !important;
+}
+#ingest-submit:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px rgba(0,228,255,0.6) !important;
+}
+#ingest-submit:disabled {
+  opacity: 0.5 !important;
+  cursor: wait !important;
+}
+
+/* ── 8. CONCLAVE CIRCULAR GAUGES ── */
+.conclave-gauges {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0;
+}
+.conclave-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: rgba(0,228,255,0.03);
+  border: 1px solid rgba(0,228,255,0.1);
+  border-radius: 8px;
+  transition: all 0.3s;
+  cursor: pointer;
+  min-width: 70px;
+}
+.conclave-gauge:hover {
+  background: rgba(0,228,255,0.08);
+  border-color: rgba(0,228,255,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,228,255,0.15);
+}
+.conclave-gauge:nth-child(1) { border-color: rgba(255,107,107,0.25); }
+.conclave-gauge:nth-child(1):hover { border-color: rgba(255,107,107,0.5); box-shadow: 0 4px 12px rgba(255,107,107,0.15); }
+.conclave-gauge:nth-child(2) { border-color: rgba(255,215,0,0.25); }
+.conclave-gauge:nth-child(2):hover { border-color: rgba(255,215,0,0.5); box-shadow: 0 4px 12px rgba(255,215,0,0.15); }
+.conclave-gauge:nth-child(3) { border-color: rgba(204,136,255,0.25); }
+.conclave-gauge:nth-child(3):hover { border-color: rgba(204,136,255,0.5); box-shadow: 0 4px 12px rgba(204,136,255,0.15); }
+.cg-ring {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(0,228,255,0.6) 0deg,
+    rgba(0,228,255,0.6) calc(var(--value, 0) * 3.6deg),
+    rgba(0,228,255,0.08) calc(var(--value, 0) * 3.6deg),
+    rgba(0,228,255,0.08) 360deg
+  );
+  box-shadow: 0 0 12px rgba(0,228,255,0.15);
+  transition: background 0.6s ease;
+}
+.conclave-gauge:nth-child(1) .cg-ring {
+  background: conic-gradient(rgba(255,107,107,0.7) 0deg, rgba(255,107,107,0.7) calc(var(--value,0)*3.6deg), rgba(255,107,107,0.08) calc(var(--value,0)*3.6deg), rgba(255,107,107,0.08) 360deg);
+}
+.conclave-gauge:nth-child(2) .cg-ring {
+  background: conic-gradient(rgba(255,215,0,0.7) 0deg, rgba(255,215,0,0.7) calc(var(--value,0)*3.6deg), rgba(255,215,0,0.08) calc(var(--value,0)*3.6deg), rgba(255,215,0,0.08) 360deg);
+}
+.conclave-gauge:nth-child(3) .cg-ring {
+  background: conic-gradient(rgba(204,136,255,0.7) 0deg, rgba(204,136,255,0.7) calc(var(--value,0)*3.6deg), rgba(204,136,255,0.08) calc(var(--value,0)*3.6deg), rgba(204,136,255,0.08) 360deg);
+}
+.cg-inner {
+  position: absolute;
+  inset: 5px;
+  background: var(--sf-bg-deep);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.cg-label {
+  font-family: Orbitron, sans-serif;
+  font-size: 7px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Conclave gauges colored */
+.conclave-gauge:nth-child(1) .cg-ring { filter: drop-shadow(0 0 4px rgba(255,107,107,0.4)) !important; }
+.conclave-gauge:nth-child(2) .cg-ring { filter: drop-shadow(0 0 4px rgba(255,215,0,0.4)) !important; }
+.conclave-gauge:nth-child(3) .cg-ring { filter: drop-shadow(0 0 4px rgba(204,136,255,0.4)) !important; }
+

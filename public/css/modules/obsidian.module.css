@@ -1,0 +1,352 @@
+/* Brain modal sizing */
+.modal-brain {
+  width: 92vw;
+  max-width: 1100px;
+  height: 80vh;
+  transition: all 0.3s;
+}
+.modal-brain.maximized {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
+/* ═══ BRAIN VIEWER ═══ */
+.modal-brain-body {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.brain-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(0,228,255,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(0,0,0,0.2);
+}
+.brain-search {
+  padding: 12px;
+  border-bottom: 1px solid rgba(0,228,255,0.1);
+}
+.brain-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,228,255,0.2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  outline: none;
+}
+.brain-search-input:focus { border-color: var(--cyan); }
+.brain-search-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+.brain-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.brain-tree::-webkit-scrollbar { width: 4px; }
+.brain-tree::-webkit-scrollbar-thumb { background: rgba(0,228,255,0.3); border-radius: 2px; }
+.brain-loading { padding: 20px; text-align: center; color: var(--text-dim); font-size: 11px; }
+
+/* Tree items */
+.brain-folder {
+  margin-bottom: 4px;
+}
+.brain-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+.brain-folder-header:hover { background: rgba(0,228,255,0.08); color: var(--text); }
+.brain-folder-header .folder-icon { font-size: 12px; }
+.brain-folder-header .folder-name { font-weight: 500; }
+.brain-folder-header .folder-count { font-size: 9px; opacity: 0.5; margin-left: auto; }
+.brain-folder-items { padding-left: 16px; }
+
+.brain-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+.brain-note:hover { background: rgba(0,228,255,0.08); color: var(--text); }
+.brain-note.active {
+  background: rgba(0,228,255,0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(0,228,255,0.3);
+}
+.brain-note .note-icon { font-size: 10px; opacity: 0.5; }
+
+/* Preview */
+.brain-preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+  min-width: 0;
+}
+.brain-preview::-webkit-scrollbar { width: 6px; }
+.brain-preview::-webkit-scrollbar-thumb { background: rgba(0,228,255,0.2); border-radius: 3px; }
+
+.brain-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-dim);
+  font-size: 13px;
+  gap: 16px;
+}
+
+/* Rendered markdown */
+.brain-preview h1 { font-family: "Orbitron", sans-serif; font-size: 22px; color: var(--cyan); margin-bottom: 12px; }
+.brain-preview h2 { font-family: "Orbitron", sans-serif; font-size: 16px; color: var(--text); margin: 24px 0 8px; padding-bottom: 4px; border-bottom: 1px solid rgba(0,228,255,0.15); }
+.brain-preview h3 { font-size: 14px; color: var(--gold); margin: 16px 0 6px; }
+.brain-preview p { font-size: 13px; line-height: 1.7; color: var(--text-dim); margin-bottom: 8px; }
+.brain-preview strong { color: var(--text); }
+.brain-preview a, .brain-preview .brain-link {
+  color: var(--cyan);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(0,228,255,0.4);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.brain-preview a:hover, .brain-preview .brain-link:hover { color: var(--gold); border-color: var(--gold); }
+.brain-preview code {
+  background: rgba(0,228,255,0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--cyan);
+}
+.brain-preview pre {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,228,255,0.15);
+  border-radius: 8px;
+  padding: 14px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.brain-preview pre code { background: none; padding: 0; }
+.brain-preview table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+.brain-preview th { background: rgba(0,228,255,0.1); color: var(--cyan); font-weight: 600; text-align: left; padding: 8px; border: 1px solid rgba(0,228,255,0.2); }
+.brain-preview td { padding: 8px; border: 1px solid rgba(0,228,255,0.1); color: var(--text-dim); }
+.brain-preview ul, .brain-preview ol { padding-left: 20px; margin: 8px 0; }
+.brain-preview li { font-size: 12px; color: var(--text-dim); line-height: 1.8; }
+.brain-preview li::marker { color: var(--cyan); }
+.brain-preview blockquote {
+  border-left: 3px solid var(--gold);
+  padding: 8px 16px;
+  margin: 12px 0;
+  background: rgba(255,215,0,0.05);
+  color: var(--text-dim);
+  font-style: italic;
+}
+.brain-preview hr {
+  border: none;
+  border-top: 1px solid rgba(0,228,255,0.15);
+  margin: 20px 0;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .modal-brain { width: 100vw; height: 100vh; border-radius: 0; }
+  .brain-sidebar { width: 100%; height: 40%; border-right: none; border-bottom: 1px solid rgba(0,228,255,0.15); }
+  .modal-brain-body { flex-direction: column; }
+  .modal-ingest { width: 95vw; }
+}
+
+/* ═══════════════════════════════════════════════
+/* Brain mini card — clicável */
+.hud-bottom-brain {
+  cursor: pointer;
+  border-color: rgba(255,215,0,0.3);
+  background: linear-gradient(180deg, rgba(255,215,0,0.06) 0%, rgba(255,215,0,0.02) 100%);
+}
+.hud-bottom-brain:hover {
+  border-color: rgba(255,215,0,0.6);
+  box-shadow: 0 0 30px rgba(255,215,0,0.15);
+  transform: translateY(-2px);
+}
+.hud-bottom-brain .hud-section-title {
+  color: var(--gold) !important;
+}
+.brain-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brain-mini-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--gold);
+  opacity: 0.7;
+  flex-shrink: 0;
+  animation: brain-spin 20s linear infinite;
+}
+@keyframes brain-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.brain-mini .widget-value {
+  color: var(--gold) !important;
+  font-size: 14px !important;
+}
+
+/* ═══ Obsidian details grid ═══ */
+.obsidian-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin-top: 6px;
+}
+.obs-detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  background: rgba(255,215,0,0.04);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 4px;
+  font-size: 9px;
+}
+.obs-icon { font-size: 10px; }
+.obs-label {
+  color: var(--text-dim);
+  font-family: "Orbitron", sans-serif;
+  font-size: 7px;
+  letter-spacing: 0.5px;
+}
+.obs-val {
+  margin-left: auto;
+  color: var(--gold, #ffd700);
+  font-family: "Orbitron", sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+
+/* ─── 5. MINI KNOWLEDGE GRAPH (Obsidian) ─── */
+.mini-graph {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 80px;
+  overflow: hidden;
+}
+.graph-node {
+  --x: 50%;
+  --y: 50%;
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255,215,0,0.5), 0 0 12px rgba(255,215,0,0.2);
+  will-change: transform, opacity;
+  animation: node-glow 3s ease-in-out infinite;
+  animation-delay: calc(var(--x, 50%) * 0.01s);
+  transform: translate(-50%, -50%);
+}
+.graph-node::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,215,0,0.08);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+@keyframes node-glow {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50%      { opacity: 1;   transform: translate(-50%, -50%) scale(1.3); }
+}
+/* graph lines drawn via embedded SVG in the component */
+.mini-graph svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.mini-graph svg line {
+  stroke: rgba(255,215,0,0.15);
+  stroke-width: 1;
+}
+
+/* ── 9. KNOWLEDGE GRAPH MINI (Obsidian card) ── */
+.kg-mini {
+  position: relative;
+  height: 50px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+.kg-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.kg-node {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--sf-secondary);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255,215,0,0.4);
+  animation: kg-pulse 3s ease-in-out infinite;
+}
+.kg-node.kn1 { top: 20%; left: 15%; animation-delay: 0s; }
+.kg-node.kn2 { top: 20%; left: 85%; animation-delay: 0.5s; }
+.kg-node.kn3 { top: 45%; left: 50%; animation-delay: 1s; width: 8px; height: 8px; }
+.kg-node.kn4 { top: 72%; left: 30%; animation-delay: 1.5s; }
+.kg-node.kn5 { top: 72%; left: 70%; animation-delay: 2s; }
+.kg-node.kn6 { top: 8%; left: 50%; animation-delay: 0.3s; width: 4px; height: 4px; }
+.kg-node.kn7 { top: 88%; left: 50%; animation-delay: 1.8s; width: 4px; height: 4px; }
+@keyframes kg-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+/* Animate the SVG lines */
+.kg-lines line {
+  animation: kg-line-glow 4s ease-in-out infinite alternate;
+}
+.kg-lines line:nth-child(2n) { animation-delay: -1s; }
+.kg-lines line:nth-child(3n) { animation-delay: -2s; }
+@keyframes kg-line-glow {
+  0% { stroke-opacity: 0.15; }
+  100% { stroke-opacity: 0.5; }
+}
+
+/* Knowledge graph nodes: brighter */
+.graph-node { width: 6px !important; height: 6px !important; box-shadow: 0 0 8px rgba(255,215,0,0.6), 0 0 15px rgba(255,215,0,0.2) !important; }
+
+/* Obsidian gold accent */
+.hud-bottom-brain { border-top: 2px solid rgba(255,215,0,0.4) !important; }
+

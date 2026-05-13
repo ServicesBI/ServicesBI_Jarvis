@@ -1,0 +1,305 @@
+/* ═══ Server bar status labels ═══ */
+.bar-status {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 7px;
+  color: var(--green, #00ff88);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  width: 20px;
+  text-align: right;
+}
+
+/* ═══ Server status grid (legivel) ═══ */
+.server-status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+}
+.server-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  background: rgba(0,255,136,0.04);
+  border: 1px solid rgba(0,255,136,0.15);
+  border-radius: 4px;
+  font-family: "JetBrains Mono", monospace;
+}
+.server-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 6px #00ff88;
+  flex-shrink: 0;
+}
+.server-dot.err {
+  background: #ff4455;
+  box-shadow: 0 0 6px #ff4455;
+}
+.server-name {
+  font-size: 8px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  flex: 1;
+}
+.server-state {
+  font-size: 8px;
+  font-weight: 700;
+  color: #00ff88;
+  letter-spacing: 0.5px;
+}
+.server-state.err {
+  color: #ff4455;
+}
+
+
+/* ─── 2. RADAR / SONAR DISPLAY ─── */
+.radar {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,255,136,0.03) 0%, rgba(5,7,20,0.95) 70%);
+  border: 1px solid rgba(0,255,136,0.2);
+  overflow: hidden;
+}
+/* concentric rings */
+.radar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 19%, rgba(0,255,136,0.1) 20%, transparent 21%),
+    radial-gradient(circle, transparent 39%, rgba(0,255,136,0.08) 40%, transparent 41%),
+    radial-gradient(circle, transparent 59%, rgba(0,255,136,0.06) 60%, transparent 61%);
+  pointer-events: none;
+}
+/* cross-hair lines */
+.radar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg,   transparent 49.5%, rgba(0,255,136,0.1) 49.5%, rgba(0,255,136,0.1) 50.5%, transparent 50.5%),
+    linear-gradient(90deg,  transparent 49.5%, rgba(0,255,136,0.1) 49.5%, rgba(0,255,136,0.1) 50.5%, transparent 50.5%);
+  pointer-events: none;
+}
+/* sweep line */
+.radar-sweep {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 2px;
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(0,255,136,0.6), transparent);
+  will-change: transform;
+  animation: radar-spin 5s linear infinite;
+}
+.radar-sweep::before {
+  content: "";
+  position: absolute;
+  top: -30px;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: conic-gradient(from -30deg at 0% 50%, rgba(0,255,136,0.12), transparent 60deg);
+  pointer-events: none;
+}
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* blips */
+.radar-blip {
+  --angle: 0deg;
+  --dist: 50%;
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00ff88;
+  box-shadow: 0 0 6px #00ff88, 0 0 12px rgba(0,255,136,0.3);
+  top: 50%;
+  left: 50%;
+  transform:
+    rotate(var(--angle))
+    translateX(calc(var(--dist) * 0.6))
+    translate(-50%, -50%);
+  will-change: opacity;
+  animation: blip-pulse 2s ease-in-out infinite;
+}
+@keyframes blip-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+/* ── 3. NETWORK DATA FLOW ── */
+.hud-widget-net {
+  flex-direction: column !important;
+  align-items: stretch !important;
+  padding: 8px 10px !important;
+  gap: 6px !important;
+}
+.net-flow {
+  position: relative;
+  height: 16px;
+  background: rgba(0,228,255,0.03);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.net-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,228,255,0.3), transparent);
+}
+.net-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--sf-primary);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 6px var(--sf-primary);
+  animation: net-flow-move 2s linear infinite;
+}
+.net-dot.nd1 { left: -4px; animation-delay: 0s; }
+.net-dot.nd2 { left: -4px; animation-delay: 0.33s; }
+.net-dot.nd3 { left: -4px; animation-delay: 0.66s; }
+.net-dot.nd4 { left: -4px; animation-delay: 1s; }
+.net-dot.nd5 { left: -4px; animation-delay: 1.33s; }
+.net-dot.nd6 { left: -4px; animation-delay: 1.66s; }
+@keyframes net-flow-move {
+  0% { left: -4px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: calc(100% + 4px); opacity: 0; }
+}
+.net-stats {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+}
+.net-up {
+  color: var(--sf-accent);
+  text-shadow: 0 0 4px rgba(0,255,136,0.3);
+}
+.net-down {
+  color: var(--sf-primary);
+  text-shadow: 0 0 4px rgba(0,228,255,0.3);
+}
+
+/* ── 4. SYSTEM UPTIME MINI WIDGET ── */
+.hud-widget-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: linear-gradient(90deg, rgba(0,228,255,0.04), rgba(5,7,20,0.8));
+  border: 1px solid rgba(0,228,255,0.12);
+  border-radius: 3px;
+  clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+}
+.uptime-val {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 11px !important;
+  color: var(--sf-primary) !important;
+}
+
+/* ── 6. RADAR / SONAR DISPLAY ── */
+.radar-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 4px auto 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,228,255,0.04) 0%, rgba(5,7,20,0.95) 100%);
+  border: 1px solid rgba(0,228,255,0.2);
+  overflow: hidden;
+}
+.radar-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(0,228,255,0.1);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.radar-ring.r1 { width: 25%; height: 25%; }
+.radar-ring.r2 { width: 55%; height: 55%; }
+.radar-ring.r3 { width: 85%; height: 85%; }
+.radar-center-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--sf-primary);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 6px var(--sf-primary);
+}
+.radar-sweep {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  top: 0;
+  left: 50%;
+  transform-origin: bottom left;
+  background: linear-gradient(0deg, rgba(0,228,255,0.25) 0%, transparent 100%);
+  animation: radar-spin 3s linear infinite;
+}
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.radar-blip {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--sf-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--sf-primary), 0 0 12px rgba(0,228,255,0.3);
+  animation: radar-blip-fade 3s ease-in-out infinite;
+}
+.radar-blip.rb1 { top: 20%; left: 60%; animation-delay: 0s; }
+.radar-blip.rb2 { top: 55%; left: 25%; animation-delay: 0.8s; }
+.radar-blip.rb3 { top: 35%; left: 72%; animation-delay: 1.5s; }
+.radar-blip.rb4 { top: 70%; left: 55%; animation-delay: 2.2s; }
+@keyframes radar-blip-fade {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.3); }
+}
+
+/* Radar: bigger + brighter */
+.radar-container {
+  width: 140px !important;
+  height: 140px !important;
+  margin: 0 auto 8px !important;
+}
+.radar-sweep {
+  background: conic-gradient(
+    transparent 0deg, transparent 340deg,
+    rgba(0,255,136,0.4) 355deg, rgba(0,255,136,0.15) 360deg
+  ) !important;
+}
+
+/* Network flow dots */
+.flow-dot { width: 5px !important; height: 5px !important; background: #00e4ff !important; box-shadow: 0 0 6px #00e4ff !important; }
+
+/* Server dots pulse */
+.server-dot { animation: status-pulse 2s ease-in-out infinite !important; }
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 4px currentColor; }
+  50% { box-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+}
+
