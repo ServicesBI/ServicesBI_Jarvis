@@ -2377,6 +2377,7 @@
 <body>
 <div class="stage">
 
+  <!-- ═══ MODULE: MENU ═══ -->
   <!-- MINIMAL TOP BRAND - 1.4 -->
   <div class="jarvas-minimal-top">
     <div class="jarvas-brand-mini">
@@ -2406,6 +2407,7 @@
     <!-- TOP BAR removida para testejarvas1_limpo -->
 <!-- LEFT PANELS - SYSTEMS RELEVANTE -->
     <aside class="side left">
+      <!-- ═══ MODULE: SERVER-ONLINE ═══ -->
       <div class="panel jarvas-server-panel">
         <span class="br1"></span><span class="br2"></span>
         <div class="panel-head"><span>Server Online</span><span class="id">/ SRV-ON</span></div>
@@ -2416,6 +2418,7 @@
         </div>
       </div>
 
+      <!-- ═══ MODULE: AGENTS ═══ -->
       <div class="panel jarvas-aiox-panel">
         <span class="br1"></span><span class="br2"></span>
         <div class="panel-head"><span>AIOX-Core</span><span class="id">/ Agents</span></div>
@@ -2435,6 +2438,7 @@
         </div>
       </div>
 
+      <!-- ═══ MODULE: AI-MODELS ═══ -->
       <div class="panel jarvas-ai-models-panel">
         <span class="br1"></span><span class="br2"></span>
         <div class="panel-head"><span>AI Models</span><span class="id">/ LLM</span></div>
@@ -2448,6 +2452,7 @@
       </div>
     </aside>
 
+    <!-- ═══ MODULE: INTERFACE — CORE / WORKSPACE ═══ -->
     <!-- CORE -->
     <main class="core-wrap">
       <span class="crosshair tl"></span>
@@ -2595,6 +2600,7 @@
 
     <!-- RIGHT PANELS -->
     <aside class="side right jarvas-ai-side">
+      <!-- ═══ MODULE: MEGA-BRAIN ═══ -->
       <div class="panel side-stack-panel side-mega-panel">
         <span class="br1"></span><span class="br2"></span>
         <div class="panel-head"><span>MEGA-BRAIN</span><span class="id">/ CORE</span></div>
@@ -2606,6 +2612,7 @@
         <button class="side-panel-action" id="btn-ingest" type="button" data-action="open-ingest">Ingerir Conhecimento</button>
       </div>
 
+      <!-- ═══ MODULE: OBSIDIAN ═══ -->
       <div class="panel side-stack-panel side-obsidian-panel">
         <span class="br1"></span><span class="br2"></span>
         <div class="panel-head side-click-target" role="button" tabindex="0" data-action="open-brain"><span>OBSIDIAN BRAIN</span><span class="id">/ VAULT</span></div>
@@ -2617,6 +2624,7 @@
         </div>
       </div>
 
+      <!-- ═══ MODULE: METRICS-QUICK ═══ -->
       <div class="panel side-stack-panel side-metrics-panel">
         <span class="br1"></span><span class="br2"></span>
         <div class="panel-head"><span>METRICS</span><span class="id">/ QUICK</span></div>
@@ -2645,6 +2653,7 @@
       </div>
     </aside>
 
+    <!-- ═══ LEGACY COMPATIBILITY IDS ═══ -->
     <div class="jarvis-hidden-compat" aria-hidden="true">
       <button id="btn-brain" type="button">Obsidian Brain</button>
       <div id="obs-name">N/A</div>
@@ -2753,6 +2762,7 @@
   <div class="noise"></div>
 </div>
 
+<!-- ═══ INLINE SCRIPTS — HUD / MODALS / TABS ═══ -->
 <script>
 /* =========================================================
    SAFE DOM HELPERS
@@ -3097,6 +3107,7 @@ pumpStream('stream-right');
 })();
 
 </script>
+<!-- ═══ MODULE: MODALS — MEGA-BRAIN / OBSIDIAN ═══ -->
 <!-- MODAL: MEGA-BRAIN INGESTAO -->
 <div class="modal-overlay" id="ingest-modal" style="display:none">
   <div class="modal-card modal-ingest">
@@ -3334,6 +3345,7 @@ pumpStream('stream-right');
 })();
 </script>
 
+<!-- ═══ LEGACY COMPATIBILITY IDS ═══ -->
 <!-- JARVIS LEGACY DOM COMPAT -->
 <div id="jarvis-legacy-compat" style="display:none!important" aria-hidden="true">
 <div id="avatar-status"></div>
@@ -3696,6 +3708,7 @@ function closeIngestModalSafe() {
 })();
 </script>
 
+<!-- ═══ MAIN SCRIPT ENTRYPOINT ═══ -->
 <script src="script.js"></script>
 </body>
 </html>
