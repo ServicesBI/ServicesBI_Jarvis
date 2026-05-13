@@ -18,6 +18,19 @@
 <link rel="stylesheet" href="/css/modules/server-online.module.css">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
+/* ═══ INTRO VIDEO OVERLAY ═══ */
+#jarvis-intro {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #000;
+  transition: opacity 1.2s ease;
+}
+#jarvis-intro.fade-out { opacity: 0; pointer-events: none; }
+#jarvis-intro-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+}
+</style>
+<style>
   :root{
     --cyan: #00E4FF;
     --cyan-dim: #5fb6c8;
@@ -2375,6 +2388,25 @@
 </style>
 </head>
 <body>
+
+<!-- ═══ INTRO VIDEO OVERLAY ═══ -->
+<div id="jarvis-intro">
+  <video id="jarvis-intro-video" src="/assets/jarvis.mp4" autoplay muted playsinline preload="auto"></video>
+</div>
+<script>
+(function(){
+  var overlay = document.getElementById('jarvis-intro');
+  var video   = document.getElementById('jarvis-intro-video');
+  video.addEventListener('playing', function(){
+    video.muted = false;
+  }, {once: true});
+  video.addEventListener('ended', function(){
+    overlay.classList.add('fade-out');
+    setTimeout(function(){ overlay.style.display = 'none'; }, 1200);
+  });
+})();
+</script>
+
 <div class="stage">
 
   <!-- ═══ MODULE: MENU ═══ -->

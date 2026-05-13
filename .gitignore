@@ -38,3 +38,6 @@ system/workflows/
 
 # Dados sens√≠veis / runtime local
 *.local.json
+# VÌdeos originais grandes do Jarvis fora do Git
+docs/assets/jarvis.mp4
+public/assets/jarvis.mp4
